@@ -7,6 +7,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ReportController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -60,5 +62,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/supplier', [SupplierController::class, 'store'])->name('suppliers.store');
     Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
     Route::delete('/supplier/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+}); 
+Route::middleware('auth')->group(function () {
+    Route::get('/laporan', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/laporan/export', [ReportController::class, 'export'])->name('reports.export');
 }); 
 require __DIR__.'/auth.php';
