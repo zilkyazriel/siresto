@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\CategoryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,5 +32,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/menu/{menu}/edit', [MenuController::class, 'edit'])->name('menus.edit');
     Route::put('/menu/{menu}', [MenuController::class, 'update'])->name('menus.update');
     Route::delete('/menu/{menu}', [MenuController::class, 'destroy'])->name('menus.destroy');
+}); 
+Route::middleware('auth')->group(function () {
+    Route::get('/kategori', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('/kategori', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('/kategori/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/kategori/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 }); 
 require __DIR__.'/auth.php';
