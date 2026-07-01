@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MenuController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -23,4 +24,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kasir', fn () => 'Halaman Kasir (khusus Kasir)')
         ->middleware('role:kasir,pemilik')->name('kasir.index');
 });
+Route::middleware('auth')->group(function () {
+    Route::get('/menu', [MenuController::class, 'index'])->name('menus.index');
+    Route::get('/menu/create', [MenuController::class, 'create'])->name('menus.create');
+    Route::post('/menu', [MenuController::class, 'store'])->name('menus.store');
+    Route::get('/menu/{menu}/edit', [MenuController::class, 'edit'])->name('menus.edit');
+    Route::put('/menu/{menu}', [MenuController::class, 'update'])->name('menus.update');
+    Route::delete('/menu/{menu}', [MenuController::class, 'destroy'])->name('menus.destroy');
+}); 
 require __DIR__.'/auth.php';
