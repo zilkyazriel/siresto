@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\StaffController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -45,5 +46,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/meja', [TableController::class, 'store'])->name('tables.store');
     Route::put('/meja/{table}', [TableController::class, 'update'])->name('tables.update');
     Route::delete('/meja/{table}', [TableController::class, 'destroy'])->name('tables.destroy');
+}); 
+Route::middleware('auth')->group(function () {
+    Route::get('/staf', [StaffController::class, 'index'])->name('staff.index');
+    Route::post('/staf', [StaffController::class, 'store'])->name('staff.store');
+    Route::put('/staf/{user}', [StaffController::class, 'update'])->name('staff.update');
+    Route::delete('/staf/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
 }); 
 require __DIR__.'/auth.php';
