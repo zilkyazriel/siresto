@@ -6,6 +6,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\SupplierController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -52,5 +53,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/staf', [StaffController::class, 'store'])->name('staff.store');
     Route::put('/staf/{user}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('/staf/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
+}); 
+
+Route::middleware('auth')->group(function () {
+    Route::get('/supplier', [SupplierController::class, 'index'])->name('suppliers.index');
+    Route::post('/supplier', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+    Route::delete('/supplier/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
 }); 
 require __DIR__.'/auth.php';
