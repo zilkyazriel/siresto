@@ -12,13 +12,10 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
-    /**
-     * Pajak dalam persen desimal. Set 0 untuk menonaktifkan pajak.
-     */
     private const TAX_RATE = 0.10;
 
     /**
-     * Halaman POS "Buat Pesanan".
+     * 3.2 POS — halaman buat pesanan baru.
      */
     public function create()
     {
@@ -107,6 +104,88 @@ class OrderController extends Controller
         return redirect()
             ->route('orders.create')
             ->with('success', "Pesanan {$order->code} berhasil dikirim ke dapur!");
+    }
+
+    /**
+     * 3.3 Daftar Pesanan — papan pantau pesanan hari ini.
+     * Model 2 status: status dapur (baru→diproses→siap→disajikan) + status bayar (lunas/belum).
+     * 'Selesai' = disajikan & lunas.
+     */
+    public function index(Request $request)
+    {
+        $orders = Order::with(['diningTable', 'items', 'payment'])
+            ->whereDate('created_at', today())
+            ->latest()
+            ->get();
+
+        $kitchenMeta = [
+            'baru'      => ['label' => 'Baru',      'badge' => 'bg-orange-100 text-orange-700'],
+            'diproses'  => ['label' => 'Diproses',  'badge' => 'bg-blue-100 text-blue-700'],
+            'siap'      => ['label' => 'Siap',       'badge' => 'bg-green-100 text-green-700'],
+            'disajikan' => ['label' => 'Disajikan', 'badge' => 'bg-slate-100 text-slate-700'],
+        ];
+
+        $cards = $orders->map(function (Order $order) use ($kitchenMeta) {
+            $status = $order->status ?: 'baru';
+            if (! isset($kitchenMeta[$status])) {
+                $status = 'baru';
+            }
+
+            $isPaid = $order->payment && (bool) ($order->payment->paid ?? false);
+
+            // Status papan untuk filter: 'selesai' = sudah disajikan & lunas.
+            $boardStatus = ($status === 'disajikan' && $isPaid) ? 'selesai' : $status;
+
+            $tableLabel = ($order->dining_table_id && $order->diningTable)
+                ? 'Meja ' . $order->diningTable->number
+                : 'Takeaway';
+
+            $minutes = (int) abs($order->created_at->diffInMinutes(now()));
+            $timeDisplay = $minutes < 60
+                ? $minutes . ' Menit lalu'
+                : $order->created_at->format('d M, H:i');
+
+            return [
+                'id'            => $order->id,
+                'code'          => $order->code,
+                'table_label'   => $tableLabel,
+                'kitchen'       => $status,
+                'kitchen_label' => $kitchenMeta[$status]['label'],
+                'kitchen_badge' => $kitchenMeta[$status]['badge'],
+                'is_paid'       => $isPaid,
+                'board_status'  => $boardStatus,
+                'item_count'    => (int) $order->items->sum('quantity'),
+                'total_display' => 'Rp ' . number_format((float) $order->total, 0, ',', '.'),
+                'time_display'  => $timeDisplay,
+                'search'        => mb_strtolower($order->code . ' ' . $tableLabel),
+            ];
+        })->values();
+
+        $counts = [
+            'all'       => $cards->count(),
+            'baru'      => $cards->where('board_status', 'baru')->count(),
+            'diproses'  => $cards->where('board_status', 'diproses')->count(),
+            'siap'      => $cards->where('board_status', 'siap')->count(),
+            'disajikan' => $cards->where('board_status', 'disajikan')->count(),
+            'selesai'   => $cards->where('board_status', 'selesai')->count(),
+        ];
+
+        return view('orders.index', compact('cards', 'counts'));
+    }
+
+    /**
+     * 3.3 — majukan status DAPUR pesanan (baru → diproses → siap → disajikan).
+     * Status bayar terpisah, diurus modul kasir (pembayaran).
+     */
+    public function updateStatus(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:diproses,siap,disajikan',
+        ]);
+
+        $order->update(['status' => $validated['status']]);
+
+        return back()->with('success', "Status pesanan {$order->code} diperbarui.");
     }
 
     /**

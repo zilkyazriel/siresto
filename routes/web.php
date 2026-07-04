@@ -71,10 +71,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan/export', [ReportController::class, 'export'])->name('reports.export');
 }); 
 Route::middleware('auth')->group(function () {
-    Route::get('/pesanan', [OrderController::class, 'create'])->name('orders.create');
-    Route::post('/pesanan', [OrderController::class, 'store'])->name('orders.store');
-    // Sementara: biar menu "Pesanan" di sidebar langsung buka POS (nanti diganti Daftar Pesanan 3.3)
-    Route::get('/pesanan/daftar', fn () => redirect()->route('orders.create'))->name('orders.index');
+    Route::get('/pesanan',              [OrderController::class, 'create'])->name('orders.create');
+    Route::post('/pesanan',            [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/pesanan/daftar',      [OrderController::class, 'index'])->name('orders.index');
+    Route::post('/pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 }); 
 Route::middleware('auth')->group(function () {
     Route::get('/kasir', [CashierController::class, 'index'])->name('cashier.index');

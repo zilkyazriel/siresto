@@ -77,6 +77,8 @@ class CashierController extends Controller
 
     /**
      * 5.2 Pembayaran — proses & simpan pembayaran, lalu ke nota.
+     * Model 2 status: pembayaran HANYA mencatat status bayar (lunas).
+     * Status dapur pesanan TIDAK diubah di sini (diurus modul dapur / daftar pesanan).
      */
     public function pay(Request $request, Order $order)
     {
@@ -105,19 +107,15 @@ class CashierController extends Controller
             $change = 0.0;
         }
 
-        DB::transaction(function () use ($order, $method, $total, $change) {
-            Payment::create([
-                'order_id' => $order->id,
-                'user_id'  => auth()->id(),
-                'amount'   => $total,
-                'paid'     => true,
-                'change'   => $change,
-                'method'   => $method,
-                'paid_at'  => now(),
-            ]);
-
-            $order->update(['status' => 'selesai']);
-        });
+        Payment::create([
+            'order_id' => $order->id,
+            'user_id'  => auth()->id(),
+            'amount'   => $total,
+            'paid'     => true,
+            'change'   => $change,
+            'method'   => $method,
+            'paid_at'  => now(),
+        ]);
 
         return redirect()->route('cashier.receipt', $order->id)
             ->with('success', 'Pembayaran berhasil diproses.');

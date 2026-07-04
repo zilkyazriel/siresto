@@ -2,18 +2,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
     <div class="mx-auto max-w-[1600px]">
-        @if (session('success'))
-            <div class="mb-4 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
-                <span class="material-symbols-outlined text-[20px]">check_circle</span>
-                {{ session('success') }}
-            </div>
-        @endif
-        @if ($errors->any())
-            <div class="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[#ba1a1a] dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
-                <span class="material-symbols-outlined text-[20px]">error</span>
-                {{ $errors->first() }}
-            </div>
-        @endif
+    @if (session('success'))
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
+            <span class="material-symbols-outlined text-[20px]">check_circle</span>
+            {{ session('success') }}
+            <a href="/pesanan/daftar" class="ml-auto inline-flex items-center gap-1 rounded-lg bg-[#f97316] px-3 py-1 text-xs font-semibold text-white hover:bg-[#ea580c]">
+                Lihat di Daftar Pesanan
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+        </a>
+    </div>
+    @endif
 
         <div x-data="posCart()" class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
             {{-- KIRI: menu --}}

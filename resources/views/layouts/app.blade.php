@@ -57,6 +57,8 @@
                     ['route' => 'suppliers.index',  'label' => 'Supplier',  'icon' => 'local_shipping'],
                     ['route' => 'reports.index',    'label' => 'Laporan',   'icon' => 'assessment'],
                     ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group'],
+                    ['route' => 'orders.create', 'label' => 'POS',     'icon' => 'point_of_sale'],
+                    ['route' => 'orders.index',  'label' => 'Pesanan', 'icon' => 'receipt_long'],
                 ];
             @endphp
 
