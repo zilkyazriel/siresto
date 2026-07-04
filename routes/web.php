@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pesanan', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/pesanan/daftar', [OrderController::class, 'index'])->name('orders.index');
     Route::post('/pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
 // Kasir (khusus kasir + pemilik)

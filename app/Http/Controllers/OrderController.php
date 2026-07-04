@@ -174,6 +174,49 @@ class OrderController extends Controller
     }
 
     /**
+     * 3.4 Detail Pesanan — tampilan lengkap satu pesanan.
+     * Timeline: Dibuat → Diproses → Siap → Disajikan → Selesai (Selesai = disajikan & lunas).
+     */
+    public function show(Order $order)
+    {
+        $order->load(['diningTable', 'items', 'payment', 'user']);
+
+        $ids        = $order->items->pluck('menu_id');
+        $menuNames  = Menu::whereIn('id', $ids)->pluck('name', 'id');
+        $menuImages = Menu::whereIn('id', $ids)->pluck('image_path', 'id');
+
+        $status = $order->status ?: 'baru';
+        $isPaid = $order->payment && (bool) ($order->payment->paid ?? false);
+        $boardStatus = ($status === 'disajikan' && $isPaid) ? 'selesai' : $status;
+
+        // Langkah timeline (1..5). Selesai hanya jika disajikan & lunas.
+        $stepOrder = ['baru' => 1, 'diproses' => 2, 'siap' => 3, 'disajikan' => 4];
+        $currentStep = ($status === 'disajikan' && $isPaid) ? 5 : ($stepOrder[$status] ?? 1);
+
+        $subtotal = (float) $order->items->sum('subtotal');
+        $total    = (float) $order->total;
+        $tax      = max(0, $total - $subtotal);
+
+        $tableLabel = ($order->dining_table_id && $order->diningTable)
+            ? 'Meja ' . $order->diningTable->number
+            : 'Takeaway';
+
+        $items = $order->items->map(fn ($it) => [
+            'name'     => $menuNames[$it->menu_id] ?? 'Menu',
+            'image'    => ($menuImages[$it->menu_id] ?? null) ? Storage::url($menuImages[$it->menu_id]) : null,
+            'qty'      => (int) $it->quantity,
+            'price'    => (float) $it->price,
+            'subtotal' => (float) $it->subtotal,
+            'note'     => $it->note,
+        ])->values();
+
+        return view('orders.show', compact(
+            'order', 'items', 'tableLabel', 'status', 'boardStatus',
+            'isPaid', 'currentStep', 'subtotal', 'tax', 'total'
+        ));
+    }
+
+    /**
      * 3.3 — majukan status DAPUR pesanan (baru → diproses → siap → disajikan).
      * Status bayar terpisah, diurus modul kasir (pembayaran).
      */
