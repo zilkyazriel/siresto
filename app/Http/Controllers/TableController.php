@@ -69,4 +69,45 @@ class TableController extends Controller
             'status.in'         => 'Status yang dipilih tidak valid.',
         ];
     }
+    public function denah()
+    {
+    $tables = \App\Models\DiningTable::orderBy('number')->get();
+
+    $orders = \App\Models\Order::with(['items', 'payment'])
+        ->whereDate('created_at', today())
+        ->whereNotNull('dining_table_id')
+        ->latest()
+        ->get();
+
+    $activeByTable = [];
+    foreach ($orders as $o) {
+        $isPaid = $o->payment && (bool) ($o->payment->paid ?? false);
+        // selesai = sudah disajikan & lunas -> meja bebas lagi
+        if ($o->status === 'disajikan' && $isPaid) {
+            continue;
+        }
+        if (!isset($activeByTable[$o->dining_table_id])) {
+            $activeByTable[$o->dining_table_id] = $o;
+        }
+    }
+
+    $cards = $tables->map(function ($t) use ($activeByTable) {
+        $o = $activeByTable[$t->id] ?? null;
+        return [
+            'id'            => $t->id,
+            'number'        => $t->number,
+            'capacity'      => (int) $t->capacity,
+            'occupied'      => (bool) $o,
+            'order_id'      => $o->id ?? null,
+            'order_code'    => $o->code ?? null,
+            'total_display' => $o ? 'Rp ' . number_format((float) $o->total, 0, ',', '.') : null,
+            'item_count'    => $o ? (int) $o->items->sum('quantity') : 0,
+        ];
+    });
+
+    $availableCount = $cards->where('occupied', false)->count();
+    $occupiedCount  = $cards->where('occupied', true)->count();
+
+    return view('tables.denah', compact('cards', 'availableCount', 'occupiedCount'));
+    }
 }

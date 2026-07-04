@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/meja', [TableController::class, 'store'])->name('tables.store');
     Route::put('/meja/{table}', [TableController::class, 'update'])->name('tables.update');
     Route::delete('/meja/{table}', [TableController::class, 'destroy'])->name('tables.destroy');
+    Route::get('/meja/denah', [TableController::class, 'denah'])->name('tables.denah');
 });
 
 // Staf
