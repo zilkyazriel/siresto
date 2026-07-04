@@ -9,7 +9,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\OrderController;
-
+use App\Http\Controllers\CashierController;
 
 
 
@@ -76,4 +76,21 @@ Route::middleware('auth')->group(function () {
     // Sementara: biar menu "Pesanan" di sidebar langsung buka POS (nanti diganti Daftar Pesanan 3.3)
     Route::get('/pesanan/daftar', fn () => redirect()->route('orders.create'))->name('orders.index');
 }); 
+Route::middleware('auth')->group(function () {
+    Route::get('/kasir', [CashierController::class, 'index'])->name('cashier.index');
+}); 
+
+// Sementara: tombol "Bayar" mengarah ke sini sampai modul Pembayaran (5.2) dibuat
+Route::get('/kasir/{order}/bayar', function (\App\Models\Order $order) {
+    return back()->with('info', 'Modul Pembayaran (5.2) belum dibuat. Segera menyusul ya!');
+})->name('cashier.show');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/kasir/{order}/bayar',  [CashierController::class, 'show'])->name('cashier.show');
+    Route::post('/kasir/{order}/bayar', [CashierController::class, 'pay'])->name('cashier.pay');
+    Route::get('/kasir/{order}/nota',   [CashierController::class, 'receipt'])->name('cashier.receipt');
+}); 
+
 require __DIR__.'/auth.php';
+
+
