@@ -58,8 +58,8 @@
                     ['route' => 'reports.index',    'label' => 'Laporan',   'icon' => 'assessment'],
                     ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group'],
                     ['route' => 'orders.create', 'label' => 'POS',     'icon' => 'point_of_sale'],
-                    ['route' => 'orders.index',  'label' => 'Pesanan', 'icon' => 'receipt_long'],
                     ['route' => 'tables.denah', 'label' => 'Denah', 'icon' => 'grid_view'],
+                    
                 ];
             @endphp
 

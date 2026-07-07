@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\KitchenController;
+use App\Http\Controllers\StockController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -95,6 +96,14 @@ Route::middleware(['auth', 'role:kasir,pemilik'])->group(function () {
 // Dapur / KDS (khusus koki + pemilik)
 Route::middleware(['auth', 'role:koki,pemilik'])->group(function () {
     Route::get('/dapur', [KitchenController::class, 'index'])->name('kitchen.index');
+});
+
+//GudANG
+Route::middleware(['auth', 'role:gudang,pemilik'])->group(function () {
+    Route::get('/stok', [StockController::class, 'index'])->name('stocks.index');
+    Route::post('/stok', [StockController::class, 'store'])->name('stocks.store');
+    Route::put('/stok/{stock}', [StockController::class, 'update'])->name('stocks.update');
+    Route::delete('/stok/{stock}', [StockController::class, 'destroy'])->name('stocks.destroy');
 });
 
 require __DIR__.'/auth.php';
