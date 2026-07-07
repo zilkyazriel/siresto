@@ -45,24 +45,24 @@
 
         <nav class="flex-1 space-y-1 overflow-y-auto px-2">
             @php
-                $nav = [
-                    ['route' => 'dashboard',        'label' => 'Dashboard', 'icon' => 'dashboard'],
-                    ['route' => 'menus.index',      'label' => 'Menu',      'icon' => 'restaurant_menu'],
-                    ['route' => 'categories.index', 'label' => 'Kategori',  'icon' => 'category'],
-                    ['route' => 'tables.index',     'label' => 'Meja',      'icon' => 'table_restaurant'],
-                    ['route' => 'orders.index',     'label' => 'Pesanan',   'icon' => 'receipt_long'],
-                    ['route' => 'kitchen.index',    'label' => 'Dapur',     'icon' => 'skillet'],
-                    ['route' => 'cashier.index',    'label' => 'Kasir',     'icon' => 'payments'],
-                    ['route' => 'stocks.index',     'label' => 'Stok',      'icon' => 'inventory_2'],
-                    ['route' => 'suppliers.index',  'label' => 'Supplier',  'icon' => 'local_shipping'],
-                    ['route' => 'reports.index',    'label' => 'Laporan',   'icon' => 'assessment'],
-                    ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group'],
-                    ['route' => 'orders.create', 'label' => 'POS',     'icon' => 'point_of_sale'],
-                    ['route' => 'tables.denah', 'label' => 'Denah', 'icon' => 'grid_view'],
-                    
+                $role = auth()->user()->role ?? null;
+                $navAll = [
+                    ['route' => 'dashboard',        'label' => 'Dashboard', 'icon' => 'dashboard',         'roles' => ['pemilik','pelayan','kasir','koki','gudang']],
+                    ['route' => 'menus.index',      'label' => 'Menu',      'icon' => 'restaurant_menu',  'roles' => ['pemilik']],
+                    ['route' => 'categories.index', 'label' => 'Kategori',  'icon' => 'category',         'roles' => ['pemilik']],
+                    ['route' => 'tables.index',     'label' => 'Meja',      'icon' => 'table_restaurant', 'roles' => ['pemilik','pelayan']],
+                    ['route' => 'orders.index',     'label' => 'Pesanan',   'icon' => 'receipt_long',     'roles' => ['pemilik','pelayan','kasir','koki']],
+                    ['route' => 'kitchen.index',    'label' => 'Dapur',     'icon' => 'skillet',          'roles' => ['pemilik','koki']],
+                    ['route' => 'cashier.index',    'label' => 'Kasir',     'icon' => 'payments',         'roles' => ['pemilik','kasir']],
+                    ['route' => 'stocks.index',     'label' => 'Stok',      'icon' => 'inventory_2',      'roles' => ['pemilik','gudang']],
+                    ['route' => 'suppliers.index',  'label' => 'Supplier',  'icon' => 'local_shipping',   'roles' => ['pemilik','gudang']],
+                    ['route' => 'reports.index',    'label' => 'Laporan',   'icon' => 'assessment',       'roles' => ['pemilik']],
+                    ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group',            'roles' => ['pemilik']],
+                    ['route' => 'orders.create',    'label' => 'POS',       'icon' => 'point_of_sale',    'roles' => ['pemilik','pelayan']],
+                    ['route' => 'tables.denah',     'label' => 'Denah',     'icon' => 'grid_view',        'roles' => ['pemilik','pelayan']],
                 ];
+                $nav = array_values(array_filter($navAll, fn ($item) => in_array($role, $item['roles'])));
             @endphp
-
             @foreach ($nav as $item)
                 @php
                     $exists = \Illuminate\Support\Facades\Route::has($item['route']);
