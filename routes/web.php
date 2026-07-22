@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockEntryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -114,5 +115,11 @@ Route::middleware(['auth', 'role:gudang,pemilik'])->group(function () {
     Route::put('/stok/{stock}', [StockController::class, 'update'])->name('stocks.update');
     Route::delete('/stok/{stock}', [StockController::class, 'destroy'])->name('stocks.destroy');
 });
-
+// Barang Masuk (penerimaan bahan) - gudang + pemilik
+Route::middleware(['auth', 'role:gudang,pemilik'])->group(function () {
+    Route::get('/barang-masuk', [StockEntryController::class, 'index'])->name('stock-entries.index');
+    Route::get('/barang-masuk/create', [StockEntryController::class, 'create'])->name('stock-entries.create');
+    Route::post('/barang-masuk', [StockEntryController::class, 'store'])->name('stock-entries.store');
+    Route::get('/barang-masuk/{stockEntry}', [StockEntryController::class, 'show'])->name('stock-entries.show');
+});
 require __DIR__.'/auth.php';

@@ -56,6 +56,7 @@
                     ['route' => 'cashier.index',    'label' => 'Kasir',     'icon' => 'payments',         'roles' => ['pemilik','kasir']],
                     ['route' => 'stocks.index',     'label' => 'Stok',      'icon' => 'inventory_2',      'roles' => ['pemilik','gudang']],
                     ['route' => 'suppliers.index',  'label' => 'Supplier',  'icon' => 'local_shipping',   'roles' => ['pemilik','gudang']],
+                    ['route' => 'stock-entries.index','label' => 'Barang Masuk','icon' => 'move_to_inbox',   'roles' => ['pemilik','gudang']],
                     ['route' => 'reports.index',    'label' => 'Laporan',   'icon' => 'assessment',       'roles' => ['pemilik']],
                     ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group',            'roles' => ['pemilik']],
                     ['route' => 'orders.create',    'label' => 'POS',       'icon' => 'point_of_sale',    'roles' => ['pemilik','pelayan']],
