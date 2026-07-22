@@ -9,6 +9,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Stock;
 
 class OrderController extends Controller
 {
@@ -21,7 +22,7 @@ class OrderController extends Controller
     {
         $categories = Category::orderBy('name')->get(['id', 'name']);
 
-        $menus = Menu::with('category')
+        $menus = Menu::with(['category', 'ingredients'])
             ->orderBy('name')
             ->get()
             ->map(fn ($m) => [
@@ -32,7 +33,20 @@ class OrderController extends Controller
                 'category_id' => $m->category_id,
                 'category' => $m->category?->name,
                 'available' => (bool) $m->is_available,
+                'has_recipe' => $m->ingredients->isNotEmpty(),
+                'recipe' => $m->ingredients->map(fn ($i) => [
+                    'stock_id' => (int) $i->stock_id,
+                    'quantity' => (float) $i->quantity,
+                ])->values(),
                 'image' => $m->image_path ? Storage::url($m->image_path) : null,
+            ]);
+
+        $stocks = Stock::orderBy('name')->get(['id', 'name', 'unit', 'quantity'])
+            ->map(fn ($s) => [
+                'id' => (int) $s->id,
+                'name' => $s->name,
+                'unit' => $s->unit,
+                'quantity' => (float) $s->quantity,
             ]);
 
         $tables = DiningTable::orderBy('number')->get(['id', 'number', 'capacity']);
@@ -40,13 +54,14 @@ class OrderController extends Controller
         return view('orders.create', [
             'categories' => $categories,
             'menus' => $menus,
+            'stocks' => $stocks,
             'tables' => $tables,
             'taxRate' => self::TAX_RATE,
         ]);
     }
-
     /**
      * Simpan pesanan baru + item-itemnya, lalu kirim ke dapur.
+     * Termasuk cek ketersediaan bahan baku (Pro-04) & potong stok otomatis (Pro-09).
      */
     public function store(Request $request)
     {
@@ -61,17 +76,69 @@ class OrderController extends Controller
             'items.min' => 'Keranjang masih kosong. Tambahkan minimal satu menu.',
         ]);
 
-        $menuIds = collect($validated['items'])->pluck('menu_id')->all();
-        $menus = Menu::whereIn('id', $menuIds)->get()->keyBy('id');
+        $menuIds = collect($validated['items'])->pluck('menu_id')->unique()->all();
+        $menus = Menu::with('ingredients')->whereIn('id', $menuIds)->get()->keyBy('id');
 
-        $order = DB::transaction(function () use ($validated, $menus) {
+        // 1) Semua menu yang dipesan WAJIB punya resep.
+        $tanpaResep = $menus->filter(fn ($m) => $m->ingredients->isEmpty());
+        if ($tanpaResep->isNotEmpty()) {
+            return back()->withInput()->with(
+                'error',
+                'Menu berikut belum punya resep sehingga belum bisa dipesan: '
+                    . $tanpaResep->pluck('name')->join(', ') . '. Lengkapi resepnya dulu di menu Menu.'
+            );
+        }
+
+        // 2) Hitung total kebutuhan bahan: [stock_id => jumlah dibutuhkan].
+        $needed = [];
+        foreach ($validated['items'] as $item) {
+            $menu = $menus[$item['menu_id']];
+            $qty = (int) $item['quantity'];
+            foreach ($menu->ingredients as $ing) {
+                $needed[$ing->stock_id] = ($needed[$ing->stock_id] ?? 0) + ((float) $ing->quantity * $qty);
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Kunci baris stok yang terlibat agar aman dari pesanan bersamaan.
+            $stocks = Stock::whereIn('id', array_keys($needed))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            // 3) Cek ketersediaan stok.
+            $kurang = [];
+            foreach ($needed as $stockId => $need) {
+                $stock = $stocks[$stockId] ?? null;
+                $tersedia = $stock ? (float) $stock->quantity : 0;
+
+                if (! $stock || $tersedia < $need) {
+                    $nama = $stock->name ?? ('Bahan #' . $stockId);
+                    $satuan = $stock->unit ?? '';
+                    $needFmt = rtrim(rtrim(number_format($need, 2, '.', ''), '0'), '.');
+                    $sisaFmt = rtrim(rtrim(number_format($tersedia, 2, '.', ''), '0'), '.');
+                    $kurang[] = "{$nama} (butuh {$needFmt} {$satuan}, sisa {$sisaFmt} {$satuan})";
+                }
+            }
+
+            if (! empty($kurang)) {
+                DB::rollBack();
+
+                return back()->withInput()->with(
+                    'error',
+                    'Pesanan ditolak — stok bahan tidak cukup: ' . implode('; ', $kurang) . '.'
+                );
+            }
+
+            // 4) Buat order + item-itemnya (harga otoritatif dari DB).
             $subtotal = 0;
             $lines = [];
-
             foreach ($validated['items'] as $item) {
                 $menu = $menus[$item['menu_id']];
                 $qty = (int) $item['quantity'];
-                $price = (float) $menu->price; // harga otoritatif dari DB, bukan dari client
+                $price = (float) $menu->price;
                 $lineSubtotal = $price * $qty;
                 $subtotal += $lineSubtotal;
 
@@ -98,14 +165,21 @@ class OrderController extends Controller
 
             $order->items()->createMany($lines);
 
-            return $order;
-        });
+            // 5) Potong stok sesuai kebutuhan.
+            foreach ($needed as $stockId => $need) {
+                $stocks[$stockId]->decrement('quantity', $need);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         return redirect()
             ->route('orders.create')
             ->with('success', "Pesanan {$order->code} berhasil dikirim ke dapur!");
     }
-
     /**
      * 3.3 Daftar Pesanan — papan pantau pesanan hari ini.
      * Model 2 status: status dapur (baru→diproses→siap→disajikan) + status bayar (lunas/belum).

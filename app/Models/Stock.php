@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Stock extends Model
 {
@@ -18,6 +19,11 @@ class Stock extends Model
         'quantity' => 'float',
         'min_quantity' => 'float',
     ];
+
+    public function menuIngredients(): HasMany
+    {
+        return $this->hasMany(MenuIngredient::class);
+    }
 
     // Status turunan otomatis dari jumlah stok
     public function getStatusAttribute(): string

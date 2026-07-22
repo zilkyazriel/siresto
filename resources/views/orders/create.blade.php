@@ -12,6 +12,12 @@
         </a>
     </div>
     @endif
+    @if (session('error'))
+    <div class="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+        <span class="material-symbols-outlined text-[20px]">error</span>
+        <span>{{ session('error') }}</span>
+    </div>
+    @endif
 
         <div x-data="posCart()" class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
             {{-- KIRI: menu --}}
@@ -45,7 +51,7 @@
                 <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                     <template x-for="menu in filteredMenus" :key="menu.id">
                         <div class="group flex flex-col overflow-hidden rounded-2xl border border-[#e0c0b1]/25 bg-white shadow-[0px_4px_20px_rgba(100,116,139,0.06)] transition-shadow hover:shadow-lg dark:border-slate-700 dark:bg-slate-800"
-                             :class="!menu.available && 'opacity-60'">
+                            :class="!orderable(menu) && 'opacity-60'">
                             <div class="relative h-36 w-full bg-[#f8f9ff] dark:bg-slate-700">
                                 <template x-if="menu.image">
                                     <img :src="menu.image" :alt="menu.name" class="h-full w-full object-cover">
@@ -55,16 +61,32 @@
                                         <span class="material-symbols-outlined text-4xl">restaurant</span>
                                     </div>
                                 </template>
-                                <div x-show="!menu.available" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50">
-                                    <span class="rounded-full bg-[#ba1a1a] px-3 py-1 text-xs font-semibold text-white">Habis</span>
-                                </div>
+
+                                <template x-if="!menu.available">
+                                    <div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-900/60">
+                                        <span class="rounded-full bg-[#ba1a1a] px-3 py-1 text-xs font-semibold text-white">Habis</span>
+                                    </div>
+                                </template>
+                                <template x-if="menu.available && !menu.has_recipe">
+                                    <div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-900/60">
+                                        <span class="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white">Belum ada resep</span>
+                                    </div>
+                                </template>
+                                <template x-if="menu.available && menu.has_recipe && stockOut(menu)">
+                                    <div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-900/60">
+                                        <span class="rounded-full bg-[#ba1a1a] px-3 py-1 text-xs font-semibold text-white">Stok bahan habis</span>
+                                    </div>
+                                </template>
                             </div>
                             <div class="flex flex-1 flex-col p-4">
                                 <h3 class="font-['Poppins'] font-semibold text-[#0b1c30] dark:text-slate-100" x-text="menu.name"></h3>
                                 <p class="mt-1 line-clamp-2 flex-1 text-sm text-[#584237] dark:text-slate-400" x-text="menu.description"></p>
+                                <span x-show="orderable(menu)" class="mt-2 text-[11px] font-medium text-[#584237] dark:text-slate-400">
+                                    Sisa <span x-text="maxAddable(menu)"></span> porsi
+                                </span>
                                 <div class="mt-3 flex items-center justify-between">
                                     <span class="font-semibold text-[#f97316]" x-text="rupiah(menu.price)"></span>
-                                    <button type="button" x-on:click="add(menu)" :disabled="!menu.available"
+                                    <button type="button" x-on:click="add(menu)" :disabled="!canAddMore(menu)"
                                             class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f97316] text-white transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-600">
                                         <span class="material-symbols-outlined text-[20px]">add</span>
                                     </button>
@@ -179,7 +201,11 @@
     </div>
 
     <script>
-        window.__POS__ = { menus: @json($menus), taxRate: {{ $taxRate }} };
+        window.__POS__ = {
+            menus: @json($menus),
+            stocks: @json($stocks),
+            taxRate: {{ $taxRate }},
+        };
         document.addEventListener('alpine:init', () => {
             Alpine.data('posCart', () => ({
                 items: [],
@@ -187,6 +213,7 @@
                 category: 'all',
                 tableId: '',
                 menus: window.__POS__.menus,
+                stocks: window.__POS__.stocks,
                 taxRate: window.__POS__.taxRate,
                 get filteredMenus() {
                     const q = this.search.trim().toLowerCase();
@@ -196,13 +223,56 @@
                         return okCat && okSearch;
                     });
                 },
+
+                // ---- stok & resep ----
+                recipeQty(menu, stockId) {
+                    const r = (menu.recipe || []).find((x) => x.stock_id === stockId);
+                    return r ? r.quantity : 0;
+                },
+                usedInCart(stockId) {
+                    return this.items.reduce((sum, i) => {
+                        const m = this.menus.find((mm) => mm.id === i.id);
+                        return sum + (m ? this.recipeQty(m, stockId) * i.qty : 0);
+                    }, 0);
+                },
+                remaining(stockId) {
+                    const s = this.stocks.find((x) => x.id === stockId);
+                    return (s ? s.quantity : 0) - this.usedInCart(stockId);
+                },
+                stockOut(menu) {
+                    if (!menu.has_recipe) return false;
+                    return menu.recipe.some((ing) => {
+                        const s = this.stocks.find((x) => x.id === ing.stock_id);
+                        return (s ? s.quantity : 0) < ing.quantity;
+                    });
+                },
+                orderable(menu) {
+                    return menu.available && menu.has_recipe && !this.stockOut(menu);
+                },
+                maxAddable(menu) {
+                    if (!menu.has_recipe || !menu.available) return 0;
+                    let max = Infinity;
+                    for (const ing of menu.recipe) {
+                        const canMake = Math.floor(this.remaining(ing.stock_id) / ing.quantity);
+                        if (canMake < max) max = canMake;
+                    }
+                    return max === Infinity ? 0 : Math.max(0, max);
+                },
+                canAddMore(menu) {
+                    return this.orderable(menu) && this.maxAddable(menu) > 0;
+                },
+
                 add(menu) {
-                    if (!menu.available) return;
+                    if (!this.canAddMore(menu)) return;
                     const found = this.items.find((i) => i.id === menu.id);
                     if (found) { found.qty++; }
                     else { this.items.push({ id: menu.id, name: menu.name, price: menu.price, qty: 1, note: '' }); }
                 },
-                inc(item) { item.qty++; },
+                inc(item) {
+                    const m = this.menus.find((mm) => mm.id === item.id);
+                    if (m && this.maxAddable(m) <= 0) return;
+                    item.qty++;
+                },
                 dec(item) { item.qty--; if (item.qty <= 0) this.remove(item); },
                 remove(item) { this.items = this.items.filter((i) => i.id !== item.id); },
                 clear() { this.items = []; },
@@ -213,5 +283,5 @@
                 rupiah(v) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(v || 0); },
             }));
         });
-    </script>
+</script>
 </x-app-layout>

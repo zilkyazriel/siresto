@@ -111,6 +111,75 @@
                             <div class="h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-orange-500 peer-checked:after:translate-x-5 dark:bg-slate-600"></div>
                         </label>
                     </div>
+                    <div class="border-t border-slate-100 pt-6 dark:border-slate-700">
+                    <div class="mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-orange-500">blender</span>
+                        <h3 class="text-sm font-semibold">Resep / Bahan Baku</h3>
+                    </div>
+                    <p class="mb-4 text-xs text-slate-400">
+                        Tentukan bahan baku &amp; jumlah pakai per <strong>1 porsi</strong>. Menu tanpa resep tidak bisa dipesan di POS/kasir.
+                    </p>
+
+                    @if ($stocks->isEmpty())
+                        <div class="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                            Belum ada data bahan baku.
+                            <a href="{{ route('stocks.index') }}" class="font-semibold underline">Tambahkan bahan baku dulu</a>
+                            agar bisa menyusun resep.
+                        </div>
+                    @else
+                        @php
+                            $existing = ($menu && $menu->exists)
+                                ? $menu->ingredients->map(fn ($i) => ['stock_id' => (string) $i->stock_id, 'quantity' => (float) $i->quantity])->values()->all()
+                                : [];
+                            $initialIngredients = old('ingredients', $existing);
+                        @endphp
+
+                        <div x-data='{
+                                stocks: @json($stocks->map(fn ($s) => ["id" => (string) $s->id, "unit" => $s->unit])->values()),
+                                rows: @json(array_values($initialIngredients)),
+                                add() { this.rows.push({ stock_id: "", quantity: "" }) },
+                                remove(i) { this.rows.splice(i, 1) },
+                                unitOf(id) { const s = this.stocks.find(x => x.id == id); return s ? s.unit : "" }
+                            }' class="space-y-3">
+
+                            <template x-for="(row, i) in rows" :key="i">
+                                <div class="flex items-center gap-2">
+                                    <select x-model="row.stock_id" :name="`ingredients[${i}][stock_id]`"
+                                            class="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-600 dark:bg-slate-700">
+                                        <option value="">Pilih bahan</option>
+                                        @foreach ($stocks as $s)
+                                            <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <div class="relative w-28 shrink-0">
+                                        <input type="number" min="0" step="0.01" x-model="row.quantity"
+                                            :name="`ingredients[${i}][quantity]`" placeholder="0"
+                                            class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-10 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-600 dark:bg-slate-700">
+                                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                                            x-text="unitOf(row.stock_id)"></span>
+                                    </div>
+
+                                    <button type="button" @click="remove(i)"
+                                            class="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                            </template>
+
+                            <p x-show="rows.length === 0"
+                            class="rounded-xl border border-dashed border-slate-200 px-4 py-4 text-center text-xs text-slate-400 dark:border-slate-600">
+                                Belum ada bahan. Klik "Tambah Bahan" untuk menyusun resep.
+                            </p>
+
+                            <button type="button" @click="add()"
+                                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-orange-300 px-4 py-2.5 text-sm font-semibold text-orange-600 transition hover:bg-orange-50 dark:border-orange-500/50 dark:hover:bg-orange-900/20">
+                                <span class="material-symbols-outlined text-base">add</span>
+                                Tambah Bahan
+                            </button>
+                        </div>
+                    @endif
+                </div>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-700">
