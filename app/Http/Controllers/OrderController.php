@@ -189,6 +189,7 @@ class OrderController extends Controller
     {
         $orders = Order::with(['diningTable', 'items', 'payment'])
             ->whereDate('created_at', today())
+            ->where('status', '!=', 'batal')
             ->latest()
             ->get();
 
@@ -303,6 +304,233 @@ class OrderController extends Controller
         $order->update(['status' => $validated['status']]);
 
         return back()->with('success', "Status pesanan {$order->code} diperbarui.");
+    }
+
+    /**
+     * Pro-11 — Batalkan pesanan (hanya saat status "Baru" & belum lunas).
+     * Stok bahan yang tadi dipotong (Pro-04) dikembalikan.
+     */
+    public function cancel(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'cancel_reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($order->status === 'batal') {
+            return back()->with('error', "Pesanan {$order->code} sudah dibatalkan.");
+        }
+
+        if ($order->status !== 'baru') {
+            return back()->with('error', 'Pesanan hanya bisa dibatalkan saat status masih "Baru".');
+        }
+
+        $order->loadMissing('payment');
+        if ($order->payment && (bool) ($order->payment->paid ?? false)) {
+            return back()->with('error', 'Pesanan yang sudah lunas tidak bisa dibatalkan.');
+        }
+
+        DB::transaction(function () use ($order, $validated) {
+            $order->load('items');
+
+            $menus = Menu::with('ingredients')
+                ->whereIn('id', $order->items->pluck('menu_id')->unique())
+                ->get()
+                ->keyBy('id');
+
+            // Kembalikan stok bahan sesuai resep tiap item.
+            foreach ($order->items as $item) {
+                $menu = $menus[$item->menu_id] ?? null;
+                if (! $menu) {
+                    continue;
+                }
+                foreach ($menu->ingredients as $ing) {
+                    Stock::whereKey($ing->stock_id)->increment('quantity', $ing->quantity * $item->quantity);
+                }
+            }
+
+            $order->update([
+                'status' => 'batal',
+                'cancel_reason' => $validated['cancel_reason'] ?? null,
+                'cancelled_at' => now(),
+            ]);
+        });
+
+        return redirect()
+            ->route('orders.index')
+            ->with('success', "Pesanan {$order->code} dibatalkan & stok bahan dikembalikan.");
+    }
+
+    /**
+     * Pro-11 — Form ubah pesanan (hanya status "Baru" & belum lunas).
+     */
+    public function edit(Order $order)
+    {
+        if ($order->status !== 'baru') {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'Pesanan hanya bisa diubah saat status masih "Baru".');
+        }
+
+        $order->loadMissing('payment');
+        if ($order->payment && (bool) ($order->payment->paid ?? false)) {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'Pesanan yang sudah lunas tidak bisa diubah.');
+        }
+
+        $order->load('items');
+
+        $menus = Menu::with('ingredients')->orderBy('name')->get()->map(fn ($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'price' => (float) $m->price,
+            'available' => (bool) $m->is_available,
+            'has_recipe' => $m->ingredients->isNotEmpty(),
+        ]);
+
+        $tables = DiningTable::orderBy('number')->get(['id', 'number', 'capacity']);
+
+        $currentItems = $order->items->map(fn ($it) => [
+            'menu_id' => $it->menu_id,
+            'quantity' => (int) $it->quantity,
+            'note' => $it->note,
+        ]);
+
+        return view('orders.edit', [
+            'order' => $order,
+            'menus' => $menus,
+            'tables' => $tables,
+            'currentItems' => $currentItems,
+            'taxRate' => self::TAX_RATE,
+        ]);
+    }
+
+    /**
+     * Pro-11 — Simpan perubahan pesanan + sesuaikan stok berdasarkan selisih resep.
+     */
+    public function update(Request $request, Order $order)
+    {
+        if ($order->status !== 'baru') {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'Pesanan hanya bisa diubah saat status masih "Baru".');
+        }
+
+        $order->loadMissing('payment');
+        if ($order->payment && (bool) ($order->payment->paid ?? false)) {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'Pesanan yang sudah lunas tidak bisa diubah.');
+        }
+
+        $validated = $request->validate([
+            'dining_table_id' => ['nullable', 'exists:dining_tables,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.menu_id' => ['required', 'exists:menus,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.note' => ['nullable', 'string', 'max:255'],
+        ], [
+            'items.required' => 'Pesanan harus punya minimal satu menu.',
+            'items.min' => 'Pesanan harus punya minimal satu menu.',
+        ]);
+
+        // Gabungkan menu yang sama.
+        $newByMenu = collect($validated['items'])
+            ->groupBy('menu_id')
+            ->map(fn ($g, $menuId) => [
+                'menu_id' => (int) $menuId,
+                'quantity' => (int) $g->sum(fn ($r) => (int) $r['quantity']),
+                'note' => collect($g)->pluck('note')->filter()->implode('; ') ?: null,
+            ])->values();
+
+        $menuIds = $newByMenu->pluck('menu_id')
+            ->merge($order->items()->pluck('menu_id'))
+            ->unique();
+
+        $menus = Menu::with('ingredients')->whereIn('id', $menuIds)->get()->keyBy('id');
+
+        // Semua menu baru wajib punya resep.
+        foreach ($newByMenu as $row) {
+            $menu = $menus[$row['menu_id']] ?? null;
+            if (! $menu || $menu->ingredients->isEmpty()) {
+                return back()->withInput()->with('error',
+                    'Menu "' . ($menu->name ?? 'tidak dikenal') . '" belum punya resep, tidak bisa dipesan.');
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($order, $newByMenu, $menus, $validated) {
+                $order->load('items');
+
+                // Hitung selisih kebutuhan stok: kembalikan item lama, potong item baru.
+                $needChange = [];
+                foreach ($order->items as $item) {
+                    $menu = $menus[$item->menu_id] ?? null;
+                    if (! $menu) {
+                        continue;
+                    }
+                    foreach ($menu->ingredients as $ing) {
+                        $needChange[$ing->stock_id] = ($needChange[$ing->stock_id] ?? 0) - ($ing->quantity * $item->quantity);
+                    }
+                }
+
+                $subtotal = 0;
+                $lines = [];
+                foreach ($newByMenu as $row) {
+                    $menu = $menus[$row['menu_id']];
+                    foreach ($menu->ingredients as $ing) {
+                        $needChange[$ing->stock_id] = ($needChange[$ing->stock_id] ?? 0) + ($ing->quantity * $row['quantity']);
+                    }
+                    $price = (float) $menu->price;
+                    $lineSub = $price * $row['quantity'];
+                    $subtotal += $lineSub;
+                    $lines[] = [
+                        'menu_id' => $menu->id,
+                        'quantity' => $row['quantity'],
+                        'price' => $price,
+                        'subtotal' => $lineSub,
+                        'status' => 'antri',
+                        'note' => $row['note'],
+                    ];
+                }
+
+                // Kunci & cek ketersediaan hanya untuk stok yang berubah.
+                $stockIds = array_keys(array_filter($needChange, fn ($v) => $v != 0));
+                if (! empty($stockIds)) {
+                    $stocks = Stock::whereIn('id', $stockIds)->lockForUpdate()->get()->keyBy('id');
+
+                    foreach ($needChange as $stockId => $delta) {
+                        if ($delta > 0) {
+                            $stock = $stocks[$stockId] ?? null;
+                            if (! $stock || $stock->quantity < $delta) {
+                                throw new \RuntimeException(
+                                    'Stok ' . ($stock->name ?? '') . ' tidak cukup (butuh tambahan ' . $delta . ' ' . ($stock->unit ?? '') . ', sisa ' . ($stock->quantity ?? 0) . ').'
+                                );
+                            }
+                        }
+                    }
+
+                    foreach ($needChange as $stockId => $delta) {
+                        if ($delta > 0) {
+                            Stock::whereKey($stockId)->decrement('quantity', $delta);
+                        } elseif ($delta < 0) {
+                            Stock::whereKey($stockId)->increment('quantity', -$delta);
+                        }
+                    }
+                }
+
+                $tax = round($subtotal * self::TAX_RATE);
+                $total = $subtotal + $tax;
+
+                $order->items()->delete();
+                $order->items()->createMany($lines);
+                $order->update([
+                    'dining_table_id' => $validated['dining_table_id'] ?? null,
+                    'total' => $total,
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('orders.show', $order)
+            ->with('success', "Pesanan {$order->code} berhasil diperbarui.");
     }
 
     /**

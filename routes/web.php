@@ -95,6 +95,13 @@ Route::middleware(['auth', 'role:pelayan,koki,pemilik'])->group(function () {
     Route::post('/pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
+// Ubah / batal pesanan (Pro-11) - pelayan + pemilik
+Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+    Route::get('/pesanan/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/pesanan/{order}', [OrderController::class, 'update'])->name('orders.update');
+    Route::post('/pesanan/{order}/batal', [OrderController::class, 'cancel'])->name('orders.cancel');
+});
+
 // Kasir - kasir + pemilik
 Route::middleware(['auth', 'role:kasir,pemilik'])->group(function () {
     Route::get('/kasir', [CashierController::class, 'index'])->name('cashier.index');

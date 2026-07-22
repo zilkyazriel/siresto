@@ -1,4 +1,5 @@
 <x-app-layout>
+<style>[x-cloak]{display:none!important}</style>
 <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
 @if (session('success'))
@@ -12,6 +13,12 @@
 </div>
 @endif
 
+@if (session('error'))
+<div class="mb-5 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+<span class="material-symbols-outlined text-[20px]">error</span>{{ session('error') }}
+</div>
+@endif
+
 @php
 $badgeMeta = [
     'baru'      => ['Baru', 'bg-orange-100 text-orange-700'],
@@ -19,6 +26,7 @@ $badgeMeta = [
     'siap'      => ['Siap', 'bg-green-100 text-green-700'],
     'disajikan' => ['Disajikan', 'bg-slate-100 text-slate-700'],
     'selesai'   => ['Selesai', 'bg-emerald-100 text-emerald-700'],
+    'batal'     => ['Dibatalkan', 'bg-red-100 text-red-700'],
 ];
 $bm = $badgeMeta[$boardStatus] ?? $badgeMeta['baru'];
 $itemMeta = [
@@ -66,6 +74,11 @@ $pct = $currentStep > 1 ? (($currentStep - 1) / 4) * 100 : 0;
 <a href="{{ route('orders.index') }}" class="px-4 py-2 bg-slate-100 text-[#0b1c30] font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-2">
 <span class="material-symbols-outlined text-[20px]">arrow_back</span>Kembali
 </a>
+@if ($status === 'baru' && ! $isPaid)
+<a href="{{ route('orders.edit', $order->id) }}" class="px-4 py-2 border border-orange-200 text-orange-600 font-semibold rounded-xl hover:bg-orange-50 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">edit</span>Ubah
+</a>
+@endif
 @if ($isPaid && Route::has('cashier.receipt'))
 <a href="{{ route('cashier.receipt', $order->id) }}" class="px-4 py-2 border border-slate-200 text-[#0b1c30] font-semibold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2">
 <span class="material-symbols-outlined text-[20px]">print</span>Cetak Nota
@@ -181,7 +194,17 @@ $pct = $currentStep > 1 ? (($currentStep - 1) / 4) * 100 : 0;
 </div>
 </div>
 
-@if ($status === 'baru')
+@if ($status === 'batal')
+<div class="w-full rounded-xl bg-red-50 text-red-700 px-4 py-3">
+<div class="flex items-center gap-2 font-semibold"><span class="material-symbols-outlined text-[20px]">cancel</span>Pesanan Dibatalkan</div>
+@if ($order->cancel_reason)
+<p class="mt-1 text-sm">Alasan: {{ $order->cancel_reason }}</p>
+@endif
+@if ($order->cancelled_at)
+<p class="mt-0.5 text-xs text-red-500">{{ $order->cancelled_at->format('d M Y, H:i') }}</p>
+@endif
+</div>
+@elseif ($status === 'baru')
 <form method="POST" action="{{ route('orders.updateStatus', $order->id) }}">
 @csrf
 <input type="hidden" name="status" value="diproses">
@@ -189,6 +212,28 @@ $pct = $currentStep > 1 ? (($currentStep - 1) / 4) * 100 : 0;
 <span class="material-symbols-outlined text-[20px]">skillet</span>Mulai Proses
 </button>
 </form>
+@if (! $isPaid)
+<div x-data="{ openCancel: false }" class="mt-3">
+<button type="button" @click="openCancel = true" class="w-full py-3 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">cancel</span>Batal Pesanan
+</button>
+<div x-show="openCancel" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="openCancel = false">
+<div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+<h3 class="text-lg font-bold text-[#0b1c30] mb-1">Batalkan Pesanan?</h3>
+<p class="text-sm text-slate-500 mb-4">Stok bahan yang terpakai akan dikembalikan otomatis. Tindakan ini tidak dapat diurungkan.</p>
+<form method="POST" action="{{ route('orders.cancel', $order->id) }}">
+@csrf
+<label class="mb-1 block text-sm font-semibold text-slate-700">Alasan (opsional)</label>
+<input type="text" name="cancel_reason" maxlength="255" placeholder="mis. Pelanggan berubah pikiran" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 mb-4">
+<div class="flex justify-end gap-2">
+<button type="button" @click="openCancel = false" class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Kembali</button>
+<button type="submit" class="rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700">Ya, Batalkan</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+@endif
 @elseif ($status === 'diproses')
 <form method="POST" action="{{ route('orders.updateStatus', $order->id) }}">
 @csrf

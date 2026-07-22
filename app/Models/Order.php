@@ -14,12 +14,15 @@ class Order extends Model
         'dining_table_id',
         'user_id',
         'status',
+        'cancel_reason',
+        'cancelled_at',
         'note',
         'total',
     ];
 
     protected $casts = [
         'total' => 'decimal:2',
+        'cancelled_at' => 'datetime',
     ];
 
     public function diningTable(): BelongsTo
