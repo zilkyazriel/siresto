@@ -11,7 +11,7 @@
         {{-- Action bar: period toggle + export --}}
         <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="inline-flex items-center gap-1 rounded-xl border border-[#e0c0b1]/40 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                @foreach (['today' => 'Hari Ini', '7d' => '7 Hari', '30d' => '30 Hari'] as $key => $label)
+                @foreach (['today' => 'Hari Ini', '7d' => '7 Hari', '30d' => '30 Hari', 'month' => 'Bulan Ini', 'year' => 'Tahun Ini'] as $key => $label)
                     <a href="{{ route('reports.index', ['period' => $key]) }}"
                        class="rounded-lg px-4 py-2 text-sm font-medium transition-colors @if ($period === $key) bg-[#f97316] text-white shadow @else text-[#584237] hover:bg-[#e5eeff] dark:text-slate-300 dark:hover:bg-slate-700 @endif">
                         {{ $label }}

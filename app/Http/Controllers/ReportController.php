@@ -90,35 +90,36 @@ class ReportController extends Controller
 
     private function period(Request $request): string
     {
-        $period = $request->query('period');
+    $period = $request->query('period');
 
-        return in_array($period, ['today', '7d', '30d'], true) ? $period : 'today';
+    return in_array($period, ['today', '7d', '30d', 'month', 'year'], true) ? $period : 'today';
     }
 
     private function range(string $period): array
     {
-        $end = Carbon::now();
-        $start = match ($period) {
-            '7d' => Carbon::now()->subDays(6)->startOfDay(),
-            '30d' => Carbon::now()->subDays(29)->startOfDay(),
-            default => Carbon::now()->startOfDay(),
-        };
+    $end = Carbon::now();
+    $start = match ($period) {
+        '7d'    => Carbon::now()->subDays(6)->startOfDay(),
+        '30d'   => Carbon::now()->subDays(29)->startOfDay(),
+        'month' => Carbon::now()->startOfMonth(),
+        'year'  => Carbon::now()->startOfYear(),
+        default => Carbon::now()->startOfDay(),
+    };
 
-        return [$start, $end];
+    return [$start, $end];
     }
 
     private function previousRange(string $period, Carbon $start): array
     {
-        $days = match ($period) {
-            '7d' => 7,
-            '30d' => 30,
-            default => 1,
-        };
+    $prevStart = match ($period) {
+        '7d'    => (clone $start)->subDays(7),
+        '30d'   => (clone $start)->subDays(30),
+        'month' => (clone $start)->subMonthNoOverflow(),
+        'year'  => (clone $start)->subYear(),
+        default => (clone $start)->subDay(),
+    };
 
-        return [
-            (clone $start)->subDays($days),
-            (clone $start)->subSecond(),
-        ];
+    return [$prevStart, (clone $start)->subSecond()];
     }
 
     private function metrics(Carbon $start, Carbon $end): array
@@ -145,25 +146,44 @@ class ReportController extends Controller
 
     private function trend(string $period, Carbon $start, Carbon $end): array
     {
-        if ($period === 'today') {
-            $totals = Payment::whereRaw(self::DATE_EXPR . ' >= ?', [$start])
-                ->whereRaw(self::DATE_EXPR . ' <= ?', [$end])
-                ->selectRaw('HOUR(' . self::DATE_EXPR . ') as bucket, SUM(amount) as total')
-                ->groupBy('bucket')
-                ->pluck('total', 'bucket');
+    // Per jam untuk "Hari Ini"
+    if ($period === 'today') {
+        $totals = Payment::whereRaw(self::DATE_EXPR . ' >= ?', [$start])
+            ->whereRaw(self::DATE_EXPR . ' <= ?', [$end])
+            ->selectRaw('HOUR(' . self::DATE_EXPR . ') as bucket, SUM(amount) as total')
+            ->groupBy('bucket')
+            ->pluck('total', 'bucket');
 
-            $labels = [];
-            $values = [];
-            for ($h = 0; $h < 24; $h++) {
-                $labels[] = sprintf('%02d:00', $h);
-                $values[] = round((float) ($totals[$h] ?? 0), 2);
-            }
-
-            return [$labels, $values];
+        $labels = [];
+        $values = [];
+        for ($h = 0; $h < 24; $h++) {
+            $labels[] = sprintf('%02d:00', $h);
+            $values[] = round((float) ($totals[$h] ?? 0), 2);
         }
 
-        $days = $period === '30d' ? 30 : 7;
+        return [$labels, $values];
+    }
 
+    // Per bulan untuk "Tahun Ini" (Jan-Des)
+    if ($period === 'year') {
+        $totals = Payment::whereRaw(self::DATE_EXPR . ' >= ?', [$start])
+            ->whereRaw(self::DATE_EXPR . ' <= ?', [$end])
+            ->selectRaw('MONTH(' . self::DATE_EXPR . ') as bucket, SUM(amount) as total')
+            ->groupBy('bucket')
+            ->pluck('total', 'bucket');
+
+        $labels = [];
+        $values = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $labels[] = Carbon::createFromDate($start->year, $m, 1)->format('M');
+            $values[] = round((float) ($totals[$m] ?? 0), 2);
+        }
+
+        return [$labels, $values];
+    }
+
+    // Per hari untuk "Bulan Ini" (tanggal 1 s.d. hari ini)
+    if ($period === 'month') {
         $totals = Payment::whereRaw(self::DATE_EXPR . ' >= ?', [$start])
             ->whereRaw(self::DATE_EXPR . ' <= ?', [$end])
             ->selectRaw('DATE(' . self::DATE_EXPR . ') as bucket, SUM(amount) as total')
@@ -172,15 +192,35 @@ class ReportController extends Controller
 
         $labels = [];
         $values = [];
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $day = Carbon::now()->subDays($i)->startOfDay();
-            $labels[] = $day->format('d M');
-            $values[] = round((float) ($totals[$day->format('Y-m-d')] ?? 0), 2);
+        $cursor = (clone $start);
+        while ($cursor->lte($end)) {
+            $labels[] = $cursor->format('d M');
+            $values[] = round((float) ($totals[$cursor->format('Y-m-d')] ?? 0), 2);
+            $cursor->addDay();
         }
 
         return [$labels, $values];
     }
 
+    // Per hari untuk 7 Hari / 30 Hari
+    $days = $period === '30d' ? 30 : 7;
+
+    $totals = Payment::whereRaw(self::DATE_EXPR . ' >= ?', [$start])
+        ->whereRaw(self::DATE_EXPR . ' <= ?', [$end])
+        ->selectRaw('DATE(' . self::DATE_EXPR . ') as bucket, SUM(amount) as total')
+        ->groupBy('bucket')
+        ->pluck('total', 'bucket');
+
+    $labels = [];
+    $values = [];
+    for ($i = $days - 1; $i >= 0; $i--) {
+        $day = Carbon::now()->subDays($i)->startOfDay();
+        $labels[] = $day->format('d M');
+        $values[] = round((float) ($totals[$day->format('Y-m-d')] ?? 0), 2);
+    }
+
+    return [$labels, $values];
+    }
     private function methodLabel(?string $method): string
     {
         return match ($method) {
