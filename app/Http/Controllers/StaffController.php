@@ -28,13 +28,16 @@ class StaffController extends Controller
             'is_active' => ['required', 'boolean'],
         ], $this->messages());
 
-        User::create([
-            'name'      => $data['name'],
-            'email'     => $data['email'],
-            'role'      => $data['role'],
-            'password'  => Hash::make($data['password']),
-            'is_active' => $data['is_active'],
-        ]);
+        $user = User::create([
+        'name'      => $data['name'],
+        'email'     => $data['email'],
+        'role'      => $data['role'],
+        'password'  => Hash::make($data['password']),
+        'is_active' => $data['is_active'],
+    ]);
+
+    // Staf dibuat langsung oleh Pemilik → tandai terverifikasi otomatis
+    $user->forceFill(['email_verified_at' => now()])->save();
 
         return redirect()->route('staff.index')
             ->with('success', 'Staf "' . $data['name'] . '" berhasil ditambahkan.');

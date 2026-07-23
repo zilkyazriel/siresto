@@ -20,9 +20,7 @@
                 @auth
                     <a href="{{ url('/dashboard') }}" class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">Dashboard</a>
                 @else
-                    <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:text-orange-600">Masuk</a>
-                    <a href="{{ route('register') }}" class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600">Daftar</a>
-                @endauth
+                    <a href="{{ route('login') }}" class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600">Masuk</a>                @endauth
             </div>
         </nav>
     </header>
@@ -35,9 +33,7 @@
             <h1 class="mt-5 font-heading text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">Kelola restoran Anda <span class="text-orange-500">dalam satu tempat</span></h1>
             <p class="mt-5 max-w-lg text-lg text-slate-500">Dari mencatat pesanan, memantau dapur, mengatur stok, sampai laporan penjualan — SIRESTO bikin operasional restoran jadi rapi, cepat, dan gampang dipantau.</p>
             <div class="mt-8 flex flex-wrap gap-3">
-                <a href="{{ route('register') }}" class="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600">Mulai Sekarang</a>
-                <a href="{{ route('login') }}" class="rounded-xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:border-orange-300 hover:text-orange-600">Masuk</a>
-            </div>
+                <a href="{{ route('login') }}" class="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600">Mulai Sekarang</a>            </div>
         </div>
         <div class="relative">
             <div class="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-orange-200/60 blur-2xl"></div>

@@ -55,9 +55,6 @@
                     <button type="submit" class="w-full rounded-xl bg-orange-500 py-3 font-semibold text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600">Masuk</button>
                 </form>
 
-                <p class="mt-6 text-center text-sm text-slate-500">Belum punya akun?
-                    <a href="{{ route('register') }}" class="font-semibold text-orange-600 hover:underline">Daftar di sini</a>
-                </p>
             </div>
         </div>
     </div>
