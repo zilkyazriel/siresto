@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
     Route::put('/meja/{table}', [TableController::class, 'update'])->name('tables.update');
     Route::delete('/meja/{table}', [TableController::class, 'destroy'])->name('tables.destroy');
     Route::get('/meja/denah', [TableController::class, 'denah'])->name('tables.denah');
+    Route::post('/meja/{table}/bersih', [TableController::class, 'markClean'])->name('tables.markClean');
 });
 
 // Staf - pemilik

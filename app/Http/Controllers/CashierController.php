@@ -17,6 +17,7 @@ class CashierController extends Controller
     {
         $orders = Order::with(['diningTable', 'items', 'payment'])
             ->whereDate('created_at', today())
+            ->where('status', '!=', 'batal')   
             ->latest()
             ->get();
 
@@ -62,6 +63,11 @@ class CashierController extends Controller
     {
         $order->load(['diningTable', 'items', 'payment', 'user']);
 
+        if ($order->status === 'batal') {
+            return redirect()->route('cashier.index')
+                ->with('error', "Pesanan {$order->code} sudah dibatalkan.");
+        }
+
         if ($order->payment && (bool) ($order->payment->paid ?? false)) {
             return redirect()->route('cashier.receipt', $order->id)
                 ->with('info', 'Pesanan ini sudah dibayar.');
@@ -85,6 +91,11 @@ class CashierController extends Controller
         if ($order->payment && (bool) ($order->payment->paid ?? false)) {
             return redirect()->route('cashier.receipt', $order->id)
                 ->with('info', 'Pesanan ini sudah dibayar.');
+        }
+
+        if ($order->status === 'batal') {
+            return redirect()->route('cashier.index')
+                ->with('error', "Pesanan {$order->code} sudah dibatalkan dan tidak bisa dibayar.");
         }
 
         $validated = $request->validate([
@@ -116,6 +127,11 @@ class CashierController extends Controller
             'method'   => $method,
             'paid_at'  => now(),
         ]);
+
+        // Pro-13: pesanan lunas -> hitung ulang status meja (dukung banyak pesanan/meja)
+        if ($order->dining_table_id) {
+            $order->diningTable?->refreshStatusFromOrders();
+        }
 
         return redirect()->route('cashier.receipt', $order->id)
             ->with('success', 'Pembayaran berhasil diproses.');

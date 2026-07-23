@@ -20,7 +20,7 @@ class TableController extends Controller
         $data = $request->validate([
             'number'   => ['required', 'string', 'max:255', Rule::unique('dining_tables', 'number')],
             'capacity' => ['required', 'integer', 'min:1', 'max:100'],
-            'status'   => ['required', Rule::in(['tersedia', 'terisi', 'reserved'])],
+            'status'   => ['required', Rule::in(['tersedia', 'terisi', 'kotor', 'reserved'])],
         ], $this->messages());
 
         DiningTable::create($data);
@@ -34,7 +34,7 @@ class TableController extends Controller
         $data = $request->validate([
             'number'   => ['required', 'string', 'max:255', Rule::unique('dining_tables', 'number')->ignore($table->id)],
             'capacity' => ['required', 'integer', 'min:1', 'max:100'],
-            'status'   => ['required', Rule::in(['tersedia', 'terisi', 'reserved'])],
+            'status'   => ['required', Rule::in(['tersedia', 'terisi', 'kotor', 'reserved'])],
         ], $this->messages());
 
         $table->update($data);
@@ -57,6 +57,17 @@ class TableController extends Controller
             ->with('success', 'Meja "' . $number . '" berhasil dihapus.');
     }
 
+    /**
+     * Pro-13: tandai meja sudah dibersihkan -> kembali tersedia.
+     */
+    public function markClean(DiningTable $table)
+    {
+        $table->markAvailable();
+
+        return redirect()->route('tables.denah')
+            ->with('success', 'Meja "' . $table->number . '" sudah dibersihkan & siap dipakai.');
+    }
+
     private function messages(): array
     {
         return [
@@ -73,31 +84,30 @@ class TableController extends Controller
     {
     $tables = \App\Models\DiningTable::orderBy('number')->get();
 
+    // Pesanan hari ini yang masih relevan (bukan batal) - untuk info tampilan kartu.
     $orders = \App\Models\Order::with(['items', 'payment'])
         ->whereDate('created_at', today())
         ->whereNotNull('dining_table_id')
+        ->where('status', '!=', 'batal')
         ->latest()
         ->get();
 
     $activeByTable = [];
     foreach ($orders as $o) {
-        $isPaid = $o->payment && (bool) ($o->payment->paid ?? false);
-        // selesai = sudah disajikan & lunas -> meja bebas lagi
-        if ($o->status === 'disajikan' && $isPaid) {
-            continue;
-        }
-        if (!isset($activeByTable[$o->dining_table_id])) {
+        if (! isset($activeByTable[$o->dining_table_id])) {
             $activeByTable[$o->dining_table_id] = $o;
         }
     }
 
     $cards = $tables->map(function ($t) use ($activeByTable) {
         $o = $activeByTable[$t->id] ?? null;
+
         return [
             'id'            => $t->id,
             'number'        => $t->number,
             'capacity'      => (int) $t->capacity,
-            'occupied'      => (bool) $o,
+            'status'        => $t->status ?? 'tersedia',
+            'status_label'  => $t->status_label,
             'order_id'      => $o->id ?? null,
             'order_code'    => $o->code ?? null,
             'total_display' => $o ? 'Rp ' . number_format((float) $o->total, 0, ',', '.') : null,
@@ -105,9 +115,13 @@ class TableController extends Controller
         ];
     });
 
-    $availableCount = $cards->where('occupied', false)->count();
-    $occupiedCount  = $cards->where('occupied', true)->count();
+    $counts = [
+        'tersedia' => $cards->where('status', 'tersedia')->count(),
+        'terisi'   => $cards->where('status', 'terisi')->count(),
+        'kotor'    => $cards->where('status', 'kotor')->count(),
+        'reserved' => $cards->where('status', 'reserved')->count(),
+    ];
 
-    return view('tables.denah', compact('cards', 'availableCount', 'occupiedCount'));
+    return view('tables.denah', compact('cards', 'counts'));
     }
 }

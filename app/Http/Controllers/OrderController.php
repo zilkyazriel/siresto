@@ -176,6 +176,11 @@ class OrderController extends Controller
             throw $e;
         }
 
+        // Pro-13: pesanan baru -> meja jadi "terisi"
+        if ($order->dining_table_id) {
+            $order->diningTable?->update(['status' => 'terisi']);
+        }
+
         return redirect()
             ->route('orders.create')
             ->with('success', "Pesanan {$order->code} berhasil dikirim ke dapur!");
@@ -353,6 +358,11 @@ class OrderController extends Controller
                 'cancel_reason' => $validated['cancel_reason'] ?? null,
                 'cancelled_at' => now(),
             ]);
+
+            // Pro-13: pesanan dibatalkan -> hitung ulang status meja
+            if ($order->dining_table_id) {
+                $order->diningTable?->refreshStatusFromOrders();
+            }
         });
 
         return redirect()
