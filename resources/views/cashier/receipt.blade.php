@@ -46,8 +46,10 @@
         <div class="space-y-1 text-sm text-slate-600">
             <div class="flex justify-between"><span>Metode</span><span class="uppercase">{{ $order->payment->method }}</span></div>
             @if ($order->payment->method === 'tunai')
-                <div class="flex justify-between"><span>Tunai</span><span>Rp {{ number_format($total + $order->payment->change, 0, ',', '.') }}</span></div>
-                <div class="flex justify-between"><span>Kembalian</span><span>Rp {{ number_format($order->payment->change, 0, ',', '.') }}</span></div>
+            <div class="flex justify-between"><span>Tunai</span><span>Rp {{ number_format($total + $order->payment->change, 0, ',', '.') }}</span></div>
+            <div class="flex justify-between"><span>Kembalian</span><span>Rp {{ number_format($order->payment->change, 0, ',', '.') }}</span></div>
+            @elseif ($order->payment->reference_no)
+            <div class="flex justify-between"><span>No. Referensi</span><span class="font-semibold text-slate-800">{{ $order->payment->reference_no }}</span></div>
             @endif
         </div>
         <div class="my-4 border-t border-dashed border-slate-300"></div>

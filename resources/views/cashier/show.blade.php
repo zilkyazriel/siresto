@@ -96,9 +96,18 @@
                     </div>
 
                     {{-- Non-tunai --}}
-                    <div x-show="method !== 'tunai'" x-cloak class="rounded-xl border border-[#e0c0b1]/30 bg-[#f8f9ff] p-4 text-center dark:border-slate-700 dark:bg-slate-900">
-                        <span class="block text-xs font-semibold uppercase text-[#584237] dark:text-slate-400">Total Dibayar</span>
-                        <span class="mt-1 block font-['Poppins'] text-2xl font-bold text-[#0b1c30] dark:text-slate-100">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                    <div x-show="method !== 'tunai'" x-cloak class="space-y-4">
+                        <div class="rounded-xl border border-[#e0c0b1]/30 bg-[#f8f9ff] p-4 text-center dark:border-slate-700 dark:bg-slate-900">
+                            <span class="block text-xs font-semibold uppercase text-[#584237] dark:text-slate-400">Total Dibayar</span>
+                            <span class="mt-1 block font-['Poppins'] text-2xl font-bold text-[#0b1c30] dark:text-slate-100">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-sm font-semibold text-[#584237] dark:text-slate-400">
+                                No. Referensi <span x-text="method === 'qris' ? 'QRIS' : 'Kartu'"></span>
+                            </label>
+                            <input type="text" name="reference_no" x-model="reference" placeholder="Mis. no. approval / ID transaksi"
+                                class="w-full rounded-xl border border-[#e0c0b1]/40 bg-white px-4 py-3 text-sm text-[#0b1c30] focus:border-[#f97316] focus:ring-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                        </div>
                     </div>
 
                     <div class="mt-auto pt-6">
@@ -122,6 +131,7 @@
                 method: 'tunai',
                 received: 0,
                 receivedDisplay: '',
+                reference: '',
                 get change() { return this.received - this.total; },
                 onInput(e) {
                     const digits = (e.target.value || '').replace(/[^0-9]/g, '');

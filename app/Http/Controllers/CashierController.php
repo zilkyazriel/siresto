@@ -99,8 +99,11 @@ class CashierController extends Controller
         }
 
         $validated = $request->validate([
-            'method'   => 'required|in:tunai,kartu,qris',
-            'received' => 'nullable|numeric|min:0',
+            'method'       => 'required|in:tunai,kartu,qris',
+            'received'     => 'nullable|numeric|min:0',
+            'reference_no' => 'nullable|string|max:100|required_if:method,kartu,qris',
+        ], [
+            'reference_no.required_if' => 'Nomor referensi wajib diisi untuk pembayaran kartu/QRIS.',
         ]);
 
         $total    = (float) $order->total;
@@ -119,14 +122,15 @@ class CashierController extends Controller
         }
 
         Payment::create([
-            'order_id' => $order->id,
-            'user_id'  => auth()->id(),
-            'amount'   => $total,
-            'paid'     => true,
-            'change'   => $change,
-            'method'   => $method,
-            'paid_at'  => now(),
-        ]);
+        'order_id'     => $order->id,
+        'user_id'      => auth()->id(),
+        'amount'       => $total,
+        'paid'         => true,
+        'change'       => $change,
+        'method'       => $method,
+        'reference_no' => $method === 'tunai' ? null : ($validated['reference_no'] ?? null),
+        'paid_at'      => now(),
+    ]);
 
         // Pro-13: pesanan lunas -> hitung ulang status meja (dukung banyak pesanan/meja)
         if ($order->dining_table_id) {

@@ -14,6 +14,7 @@ class Payment extends Model
         'paid',
         'change',
         'method',
+        'reference_no',
         'paid_at',
     ];
 
