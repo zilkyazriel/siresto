@@ -154,7 +154,6 @@ class OrderController extends Controller
                     'quantity' => $qty,
                     'price' => $price,
                     'subtotal' => $lineSubtotal,
-                    'status' => 'antri',
                     'note' => $item['note'] ?? null,
                 ];
             }
@@ -503,7 +502,6 @@ class OrderController extends Controller
                         'quantity' => $row['quantity'],
                         'price' => $price,
                         'subtotal' => $lineSub,
-                        'status' => 'antri',
                         'note' => $row['note'],
                     ];
                 }
