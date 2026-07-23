@@ -13,7 +13,13 @@ use App\Models\Stock;
 
 class OrderController extends Controller
 {
-    private const TAX_RATE = 0.10;
+    /**
+     * Tarif pajak dari config (config/restaurant.php ← env TAX_RATE).
+     */
+    private function taxRate(): float
+    {
+        return (float) config('restaurant.tax_rate', 0.10);
+    }
 
     /**
      * 3.2 POS — halaman buat pesanan baru.
@@ -56,7 +62,7 @@ class OrderController extends Controller
             'menus' => $menus,
             'stocks' => $stocks,
             'tables' => $tables,
-            'taxRate' => self::TAX_RATE,
+            'taxRate' => $this->taxRate(),
         ]);
     }
     /**
@@ -71,6 +77,7 @@ class OrderController extends Controller
             'items.*.menu_id' => ['required', 'exists:menus,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.note' => ['nullable', 'string', 'max:255'],
+            'note' => ['nullable', 'string', 'max:500'],
         ], [
             'items.required' => 'Keranjang masih kosong. Tambahkan minimal satu menu.',
             'items.min' => 'Keranjang masih kosong. Tambahkan minimal satu menu.',
@@ -152,7 +159,7 @@ class OrderController extends Controller
                 ];
             }
 
-            $tax = round($subtotal * self::TAX_RATE);
+            $tax = round($subtotal * $this->taxRate());
             $total = $subtotal + $tax;
 
             $order = Order::create([
@@ -160,6 +167,7 @@ class OrderController extends Controller
                 'dining_table_id' => $validated['dining_table_id'] ?? null,
                 'user_id' => auth()->id(),
                 'status' => 'baru',
+                'note' => $validated['note'] ?? null,
                 'total' => $total,
             ]);
 
@@ -409,7 +417,7 @@ class OrderController extends Controller
             'menus' => $menus,
             'tables' => $tables,
             'currentItems' => $currentItems,
-            'taxRate' => self::TAX_RATE,
+            'taxRate' => $this->taxRate(),
         ]);
     }
 
@@ -525,7 +533,7 @@ class OrderController extends Controller
                     }
                 }
 
-                $tax = round($subtotal * self::TAX_RATE);
+                $tax = round($subtotal * $this->taxRate());
                 $total = $subtotal + $tax;
 
                 $order->items()->delete();

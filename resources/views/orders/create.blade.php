@@ -166,6 +166,13 @@
 
                     {{-- Ringkasan + CTA --}}
                     <div class="border-t border-[#e0c0b1]/25 p-4 dark:border-slate-700">
+                        
+                        <div class="mb-3">
+                            <label class="mb-1 block text-xs font-semibold text-[#584237] dark:text-slate-400">Catatan pesanan (opsional)</label>
+                            <textarea x-model="orderNote" rows="2" placeholder="Mis. jangan terlalu pedas, alergi kacang, dsb."
+                                    class="w-full rounded-lg border border-[#e0c0b1]/40 bg-white px-3 py-2 text-sm text-[#0b1c30] focus:border-[#f97316] focus:ring-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"></textarea>
+                        </div>
+
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm text-[#584237] dark:text-slate-400">
                                 <span>Subtotal</span><span x-text="rupiah(subtotal)"></span>
@@ -181,6 +188,7 @@
                         <form method="POST" action="{{ route('orders.store') }}" class="mt-4">
                             @csrf
                             <input type="hidden" name="dining_table_id" :value="tableId">
+                            <input type="hidden" name="note" :value="orderNote">
                             <template x-for="item in items" :key="'f-' + item.id">
                                 <span>
                                     <input type="hidden" :name="`items[${item.id}][menu_id]`" :value="item.id">
@@ -212,6 +220,7 @@
                 search: '',
                 category: 'all',
                 tableId: '',
+                orderNote: '',
                 menus: window.__POS__.menus,
                 stocks: window.__POS__.stocks,
                 taxRate: window.__POS__.taxRate,
@@ -275,7 +284,7 @@
                 },
                 dec(item) { item.qty--; if (item.qty <= 0) this.remove(item); },
                 remove(item) { this.items = this.items.filter((i) => i.id !== item.id); },
-                clear() { this.items = []; },
+                clear() { this.items = []; this.orderNote = ''; },
                 get subtotal() { return this.items.reduce((s, i) => s + i.price * i.qty, 0); },
                 get tax() { return Math.round(this.subtotal * this.taxRate); },
                 get total() { return this.subtotal + this.tax; },
