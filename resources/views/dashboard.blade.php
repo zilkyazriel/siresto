@@ -5,7 +5,7 @@
         {{-- Header --}}
         <div class="mb-8">
             <h2 class="font-['Poppins'] text-[32px] font-bold leading-tight text-[#0b1c30] dark:text-slate-100">
-                Selamat datang, {{ Auth::user()->name }} 👋
+                Selamat datang, {{ Auth::user()->name }} 
             </h2>
             <p class="mt-1 text-[#584237] dark:text-slate-400">
                 Ringkasan operasional restoran hari ini — {{ now()->translatedFormat('l, d F Y') }}. Peran Anda: <strong>{{ ucfirst(Auth::user()->role) }}</strong>.
@@ -151,7 +151,7 @@
                     @empty
                         <div class="px-6 py-16 text-center">
                             <span class="material-symbols-outlined mb-2 block text-4xl text-green-400">check_circle</span>
-                            <p class="text-[#584237] dark:text-slate-400">Semua stok aman 👍</p>
+                            <p class="text-[#584237] dark:text-slate-400">Semua stok aman </p>
                         </div>
                     @endforelse
                 </div>
