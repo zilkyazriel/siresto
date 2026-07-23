@@ -13,6 +13,7 @@ use App\Http\Controllers\CashierController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockEntryController;
+use App\Http\Controllers\ComplaintController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -83,6 +84,15 @@ Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
     Route::get('/pesanan', [OrderController::class, 'create'])->name('orders.create');
     Route::post('/pesanan', [OrderController::class, 'store'])->name('orders.store');
 });
+
+// Keluhan pelanggan (Pro-12) - pelayan + pemilik
+Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+    Route::get('/keluhan', [ComplaintController::class, 'index'])->name('complaints.index');
+    Route::get('/keluhan/buat', [ComplaintController::class, 'create'])->name('complaints.create');
+    Route::post('/keluhan', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::get('/keluhan/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
+    Route::post('/keluhan/{complaint}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
+}); 
 
 // Daftar & detail pesanan - pelayan, kasir, koki, pemilik
 Route::middleware(['auth', 'role:pelayan,kasir,koki,pemilik'])->group(function () {

@@ -61,6 +61,7 @@
                     ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group',            'roles' => ['pemilik']],
                     ['route' => 'orders.create',    'label' => 'POS',       'icon' => 'point_of_sale',    'roles' => ['pemilik','pelayan']],
                     ['route' => 'tables.denah',     'label' => 'Denah',     'icon' => 'grid_view',        'roles' => ['pemilik','pelayan']],
+                    ['route' => 'complaints.index', 'label' => 'Keluhan', 'icon' => 'feedback', 'roles' => ['pemilik', 'pelayan']],
                 ];
                 $nav = array_values(array_filter($navAll, fn ($item) => in_array($role, $item['roles'])));
             @endphp
