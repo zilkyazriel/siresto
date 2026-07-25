@@ -21,23 +21,42 @@
             <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">{{ session('info') }}</div>
         @endif
 
+        {{-- Pro-06: notifikasi pesanan siap diantar --}}
+        @if (($counts['siap'] ?? 0) > 0)
+            <div class="mb-4 flex items-center gap-3 rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 dark:border-green-800/50 dark:bg-green-900/20 dark:text-green-300">
+                <span class="material-symbols-outlined animate-bounce">notifications_active</span>
+                <span>{{ $counts['siap'] }} pesanan sudah <strong>SIAP</strong> — segera antar ke meja!</span>
+            </div>
+        @endif
+
         {{-- Search --}}
         <div class="relative mb-5 max-w-xl">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-[#584237] dark:text-slate-400">search</span>
             <input x-model="q" type="text" placeholder="Cari kode pesanan atau nomor meja..."
-                   class="w-full rounded-xl border border-[#e0c0b1]/40 bg-white py-2.5 pl-10 pr-4 text-sm text-[#0b1c30] focus:border-[#f97316] focus:ring-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                class="w-full rounded-xl border border-[#e0c0b1]/40 bg-white py-2.5 pl-10 pr-4 text-sm text-[#0b1c30] focus:border-[#f97316] focus:ring-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
         </div>
 
         {{-- Filter tabs --}}
-        <div class="mb-6 flex items-center gap-2 overflow-x-auto pb-2">
+        <div class="mb-3 flex items-center gap-2 overflow-x-auto pb-2">
             <template x-for="t in tabs" :key="t.key">
                 <button type="button" x-on:click="tab = t.key"
-                        :class="tab === t.key ? 'bg-[#f97316] text-white shadow-sm' : 'border border-[#e0c0b1]/40 bg-white text-[#584237] hover:border-[#f97316] hover:text-[#f97316] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'"
-                        class="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-semibold transition-all">
+                    :class="tab === t.key ? 'bg-[#f97316] text-white shadow-sm' : 'border border-[#e0c0b1]/40 bg-white text-[#584237] hover:border-[#f97316] hover:text-[#f97316] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'"
+                    class="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-semibold transition-all">
                     <span x-text="t.label"></span>
                     <span :class="tab === t.key ? 'bg-white/25 text-white' : 'bg-[#eff4ff] text-[#006398] dark:bg-slate-700 dark:text-slate-200'" class="rounded-lg px-2 py-0.5 text-[10px] font-bold" x-text="t.count"></span>
                 </button>
             </template>
+        </div>
+
+        {{-- Pro-06: kontrol auto-refresh --}}
+        <div class="mb-6 flex items-center gap-3 text-xs text-[#584237] dark:text-slate-400">
+            <button type="button" x-on:click="autoRefresh = !autoRefresh"
+                :class="autoRefresh ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-900/20 dark:text-emerald-300' : 'border-[#e0c0b1]/40 bg-white text-[#584237] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'"
+                class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors">
+                <span class="material-symbols-outlined text-[16px]" :class="autoRefresh ? 'animate-spin' : ''" style="animation-duration:3s">autorenew</span>
+                <span x-text="autoRefresh ? ('Auto-refresh ' + countdown + 's') : 'Auto-refresh mati'"></span>
+            </button>
+            <span class="hidden sm:inline">Berhenti otomatis saat sedang mencari</span>
         </div>
 
         @if ($cards->isEmpty())
@@ -50,14 +69,14 @@
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 @foreach ($cards as $c)
                     <div x-show='match(@js($c["board_status"]), @js($c["search"]))' x-cloak
-                         class="flex flex-col rounded-2xl border border-[#e0c0b1]/30 bg-white p-4 shadow-sm transition-all hover:border-[#f97316]/30 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+                        class="flex flex-col rounded-2xl border bg-white p-4 shadow-sm transition-all hover:shadow-md dark:bg-slate-800 {{ $c['kitchen'] === 'siap' ? 'border-green-400 ring-2 ring-green-300/60 dark:border-green-600' : 'border-[#e0c0b1]/30 hover:border-[#f97316]/30 dark:border-slate-700' }}">
                         <div class="mb-4 flex items-start justify-between gap-2">
                             <div>
                                 <p class="mb-1 text-[12px] font-bold uppercase tracking-wider text-[#f97316]">{{ $c['code'] }}</p>
                                 <h3 class="font-['Poppins'] text-lg font-bold text-[#0b1c30] dark:text-slate-100">{{ $c['table_label'] }}</h3>
                             </div>
                             <div class="flex flex-col items-end gap-1">
-                                <span class="whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold {{ $c['kitchen_badge'] }}">{{ $c['kitchen_label'] }}</span>
+                                <span class="whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold {{ $c['kitchen_badge'] }} {{ $c['kitchen'] === 'siap' ? 'animate-pulse ring-1 ring-green-400' : '' }}">{{ $c['kitchen_label'] }}</span>
                                 <span class="whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold {{ $c['is_paid'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">{{ $c['is_paid'] ? 'Lunas' : 'Belum Dibayar' }}</span>
                             </div>
                         </div>
@@ -113,8 +132,10 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('orderFilter', () => ({
-                tab: 'all',
+                tab: localStorage.getItem('orders.tab') || 'all',
                 q: '',
+                autoRefresh: (localStorage.getItem('orders.autoRefresh') ?? '1') === '1',
+                countdown: 15,
                 tabs: [
                     { key: 'all',       label: 'Semua',     count: {{ $counts['all'] }} },
                     { key: 'baru',      label: 'Baru',      count: {{ $counts['baru'] }} },
@@ -123,6 +144,19 @@
                     { key: 'disajikan', label: 'Disajikan', count: {{ $counts['disajikan'] }} },
                     { key: 'selesai',   label: 'Selesai',   count: {{ $counts['selesai'] }} },
                 ],
+                init() {
+                    // simpan pilihan tab & preferensi auto-refresh
+                    this.$watch('tab', v => localStorage.setItem('orders.tab', v));
+                    this.$watch('autoRefresh', v => localStorage.setItem('orders.autoRefresh', v ? '1' : '0'));
+
+                    setInterval(() => {
+                        if (!this.autoRefresh) { this.countdown = 15; return; }
+                        // jangan refresh saat pelayan sedang mengetik / mencari
+                        if (this.q !== '' || document.activeElement?.tagName === 'INPUT') { this.countdown = 15; return; }
+                        this.countdown--;
+                        if (this.countdown <= 0) location.reload();
+                    }, 1000);
+                },
                 match(status, text) {
                     const okTab = this.tab === 'all' || this.tab === status;
                     const okQ = this.q === '' || text.includes(this.q.toLowerCase());
