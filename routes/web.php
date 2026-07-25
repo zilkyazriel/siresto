@@ -14,6 +14,7 @@ use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockEntryController;
 use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\ReservationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -93,6 +94,15 @@ Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
     Route::get('/keluhan/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
     Route::post('/keluhan/{complaint}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
 }); 
+
+// Reservasi (Pro-01) - pelayan + pemilik
+Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+    Route::get('/reservasi', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservasi/buat', [ReservationController::class, 'create'])->name('reservations.create');
+    Route::post('/reservasi', [ReservationController::class, 'store'])->name('reservations.store');
+    Route::get('/reservasi/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
+    Route::post('/reservasi/{reservation}/status', [ReservationController::class, 'updateStatus'])->name('reservations.updateStatus');
+});
 
 // Daftar & detail pesanan - pelayan, kasir, koki, pemilik
 Route::middleware(['auth', 'role:pelayan,kasir,koki,pemilik'])->group(function () {
