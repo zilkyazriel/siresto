@@ -133,6 +133,7 @@ Route::middleware(['auth', 'role:kasir,pemilik'])->group(function () {
 // Dapur / KDS - koki + pemilik
 Route::middleware(['auth', 'role:koki,pemilik'])->group(function () {
     Route::get('/dapur', [KitchenController::class, 'index'])->name('kitchen.index');
+    Route::post('/dapur/item/{item}/status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.itemStatus');
 });
 
 // Gudang / Stok - gudang + pemilik
