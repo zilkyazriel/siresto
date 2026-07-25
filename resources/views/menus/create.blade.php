@@ -1,8 +1,8 @@
 @include('menus.form', [
-    'title' => 'Edit Menu',
-    'action' => route('menus.update', $menu),
-    'method' => 'PUT',
-    'menu' => $menu,
+    'title' => 'Tambah Menu',
+    'action' => route('menus.store'),
+    'method' => 'POST',
+    'menu' => null,
     'categories' => $categories,
     'stocks' => $stocks,
 ])
