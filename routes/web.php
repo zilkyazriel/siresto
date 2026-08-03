@@ -30,8 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Menu - pemilik
-Route::middleware(['auth', 'role:pemilik'])->group(function () {
+// Menu - admin
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/menu', [MenuController::class, 'index'])->name('menus.index');
     Route::get('/menu/create', [MenuController::class, 'create'])->name('menus.create');
     Route::post('/menu', [MenuController::class, 'store'])->name('menus.store');
@@ -40,16 +40,16 @@ Route::middleware(['auth', 'role:pemilik'])->group(function () {
     Route::delete('/menu/{menu}', [MenuController::class, 'destroy'])->name('menus.destroy');
 });
 
-// Kategori - pemilik
-Route::middleware(['auth', 'role:pemilik'])->group(function () {
+// Kategori - admin
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/kategori', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/kategori', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/kategori/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/kategori/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 });
 
-// Meja - pelayan + pemilik
-Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+// Meja - pelayan + admin
+Route::middleware(['auth', 'role:pelayan,admin'])->group(function () {
     Route::get('/meja', [TableController::class, 'index'])->name('tables.index');
     Route::post('/meja', [TableController::class, 'store'])->name('tables.store');
     Route::put('/meja/{table}', [TableController::class, 'update'])->name('tables.update');
@@ -58,45 +58,45 @@ Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
     Route::post('/meja/{table}/bersih', [TableController::class, 'markClean'])->name('tables.markClean');
 });
 
-// Staf - pemilik
-Route::middleware(['auth', 'role:pemilik'])->group(function () {
+// Staf - admin
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/staf', [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staf', [StaffController::class, 'store'])->name('staff.store');
     Route::put('/staf/{user}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('/staf/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
 });
 
-// Supplier - gudang + pemilik
-Route::middleware(['auth', 'role:gudang,pemilik'])->group(function () {
+// Supplier - gudang + admin
+Route::middleware(['auth', 'role:gudang,admin'])->group(function () {
     Route::get('/supplier', [SupplierController::class, 'index'])->name('suppliers.index');
     Route::post('/supplier', [SupplierController::class, 'store'])->name('suppliers.store');
     Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
     Route::delete('/supplier/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
 });
 
-// Laporan - pemilik
-Route::middleware(['auth', 'role:pemilik'])->group(function () {
+// Laporan - admin & pemilik (lihat + ekspor CSV)
+Route::middleware(['auth', 'role:admin,pemilik'])->group(function () {
     Route::get('/laporan', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/laporan/export', [ReportController::class, 'export'])->name('reports.export');
 });
 
-// POS / buat pesanan - pelayan + pemilik
-Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+// POS / buat pesanan - pelayan + admin
+Route::middleware(['auth', 'role:pelayan,admin'])->group(function () {
     Route::get('/pesanan', [OrderController::class, 'create'])->name('orders.create');
     Route::post('/pesanan', [OrderController::class, 'store'])->name('orders.store');
 });
 
-// Keluhan pelanggan (Pro-12) - pelayan + pemilik
-Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+// Keluhan pelanggan (Pro-12) - pelayan + admin
+Route::middleware(['auth', 'role:pelayan,admin'])->group(function () {
     Route::get('/keluhan', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/keluhan/buat', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/keluhan', [ComplaintController::class, 'store'])->name('complaints.store');
     Route::get('/keluhan/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
     Route::post('/keluhan/{complaint}/status', [ComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
-}); 
+});
 
-// Reservasi (Pro-01) - pelayan + pemilik
-Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+// Reservasi (Pro-01) - pelayan + admin
+Route::middleware(['auth', 'role:pelayan,admin'])->group(function () {
     Route::get('/reservasi', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservasi/buat', [ReservationController::class, 'create'])->name('reservations.create');
     Route::post('/reservasi', [ReservationController::class, 'store'])->name('reservations.store');
@@ -104,50 +104,51 @@ Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
     Route::post('/reservasi/{reservation}/status', [ReservationController::class, 'updateStatus'])->name('reservations.updateStatus');
 });
 
-// Daftar & detail pesanan - pelayan, kasir, koki, pemilik
-Route::middleware(['auth', 'role:pelayan,kasir,koki,pemilik'])->group(function () {
+// Daftar & detail pesanan - pelayan, kasir, koki, admin
+Route::middleware(['auth', 'role:pelayan,kasir,koki,admin'])->group(function () {
     Route::get('/pesanan/daftar', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
-// Update status pesanan (dapur / pelayan) - pelayan, koki, pemilik
-Route::middleware(['auth', 'role:pelayan,koki,pemilik'])->group(function () {
+// Update status pesanan (dapur / pelayan) - pelayan, koki, admin
+Route::middleware(['auth', 'role:pelayan,koki,admin'])->group(function () {
     Route::post('/pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
-// Ubah / batal pesanan (Pro-11) - pelayan + pemilik
-Route::middleware(['auth', 'role:pelayan,pemilik'])->group(function () {
+// Ubah / batal pesanan (Pro-11) - pelayan + admin
+Route::middleware(['auth', 'role:pelayan,admin'])->group(function () {
     Route::get('/pesanan/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
     Route::put('/pesanan/{order}', [OrderController::class, 'update'])->name('orders.update');
     Route::post('/pesanan/{order}/batal', [OrderController::class, 'cancel'])->name('orders.cancel');
 });
 
-// Kasir - kasir + pemilik
-Route::middleware(['auth', 'role:kasir,pemilik'])->group(function () {
+// Kasir - kasir + admin
+Route::middleware(['auth', 'role:kasir,admin'])->group(function () {
     Route::get('/kasir', [CashierController::class, 'index'])->name('cashier.index');
     Route::get('/kasir/{order}/bayar', [CashierController::class, 'show'])->name('cashier.show');
     Route::post('/kasir/{order}/bayar', [CashierController::class, 'pay'])->name('cashier.pay');
     Route::get('/kasir/{order}/nota', [CashierController::class, 'receipt'])->name('cashier.receipt');
 });
 
-// Dapur / KDS - koki + pemilik
-Route::middleware(['auth', 'role:koki,pemilik'])->group(function () {
+// Dapur / KDS - koki + admin
+Route::middleware(['auth', 'role:koki,admin'])->group(function () {
     Route::get('/dapur', [KitchenController::class, 'index'])->name('kitchen.index');
     Route::post('/dapur/item/{item}/status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.itemStatus');
 });
 
-// Gudang / Stok - gudang + pemilik
-Route::middleware(['auth', 'role:gudang,pemilik'])->group(function () {
+// Gudang / Stok - gudang + admin
+Route::middleware(['auth', 'role:gudang,admin'])->group(function () {
     Route::get('/stok', [StockController::class, 'index'])->name('stocks.index');
     Route::post('/stok', [StockController::class, 'store'])->name('stocks.store');
     Route::put('/stok/{stock}', [StockController::class, 'update'])->name('stocks.update');
     Route::delete('/stok/{stock}', [StockController::class, 'destroy'])->name('stocks.destroy');
 });
-// Barang Masuk (penerimaan bahan) - gudang + pemilik
-Route::middleware(['auth', 'role:gudang,pemilik'])->group(function () {
+// Barang Masuk (penerimaan bahan) - gudang + admin
+Route::middleware(['auth', 'role:gudang,admin'])->group(function () {
     Route::get('/barang-masuk', [StockEntryController::class, 'index'])->name('stock-entries.index');
     Route::get('/barang-masuk/create', [StockEntryController::class, 'create'])->name('stock-entries.create');
     Route::post('/barang-masuk', [StockEntryController::class, 'store'])->name('stock-entries.store');
     Route::get('/barang-masuk/{stockEntry}', [StockEntryController::class, 'show'])->name('stock-entries.show');
 });
+
 require __DIR__.'/auth.php';

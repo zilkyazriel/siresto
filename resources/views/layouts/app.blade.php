@@ -47,22 +47,22 @@
             @php
                 $role = auth()->user()->role ?? null;
                 $navAll = [
-                    ['route' => 'dashboard',        'label' => 'Dashboard', 'icon' => 'dashboard',         'roles' => ['pemilik','pelayan','kasir','koki','gudang']],
-                    ['route' => 'menus.index',      'label' => 'Menu',      'icon' => 'restaurant_menu',  'roles' => ['pemilik']],
-                    ['route' => 'categories.index', 'label' => 'Kategori',  'icon' => 'category',         'roles' => ['pemilik']],
-                    ['route' => 'tables.index',     'label' => 'Meja',      'icon' => 'table_restaurant', 'roles' => ['pemilik','pelayan']],
-                    ['route' => 'orders.index',     'label' => 'Pesanan',   'icon' => 'receipt_long',     'roles' => ['pemilik','pelayan','kasir','koki']],
-                    ['route' => 'kitchen.index',    'label' => 'Dapur',     'icon' => 'skillet',          'roles' => ['pemilik','koki']],
-                    ['route' => 'cashier.index',    'label' => 'Kasir',     'icon' => 'payments',         'roles' => ['pemilik','kasir']],
-                    ['route' => 'stocks.index',     'label' => 'Stok',      'icon' => 'inventory_2',      'roles' => ['pemilik','gudang']],
-                    ['route' => 'suppliers.index',  'label' => 'Supplier',  'icon' => 'local_shipping',   'roles' => ['pemilik','gudang']],
-                    ['route' => 'stock-entries.index','label' => 'Barang Masuk','icon' => 'move_to_inbox',   'roles' => ['pemilik','gudang']],
-                    ['route' => 'reports.index',    'label' => 'Laporan',   'icon' => 'assessment',       'roles' => ['pemilik']],
-                    ['route' => 'staff.index',      'label' => 'Staf',      'icon' => 'group',            'roles' => ['pemilik']],
-                    ['route' => 'orders.create',    'label' => 'POS',       'icon' => 'point_of_sale',    'roles' => ['pemilik','pelayan']],
-                    ['route' => 'tables.denah',     'label' => 'Denah',     'icon' => 'grid_view',        'roles' => ['pemilik','pelayan']],
-                    ['route' => 'complaints.index', 'label' => 'Keluhan', 'icon' => 'feedback', 'roles' => ['pemilik', 'pelayan']],
-                    ['route' => 'reservations.index', 'label' => 'Reservasi', 'icon' => 'event_seat', 'roles' => ['pemilik', 'pelayan']],
+                    ['route' => 'dashboard',         'label' => 'Dashboard',    'icon' => 'dashboard',        'roles' => ['admin','pemilik','pelayan','kasir','koki','gudang']],
+                    ['route' => 'menus.index',       'label' => 'Menu',         'icon' => 'restaurant_menu', 'roles' => ['admin']],
+                    ['route' => 'categories.index',  'label' => 'Kategori',     'icon' => 'category',        'roles' => ['admin']],
+                    ['route' => 'tables.index',      'label' => 'Meja',         'icon' => 'table_restaurant','roles' => ['admin','pelayan']],
+                    ['route' => 'orders.index',      'label' => 'Pesanan',      'icon' => 'receipt_long',    'roles' => ['admin','pelayan','kasir','koki']],
+                    ['route' => 'kitchen.index',     'label' => 'Dapur',        'icon' => 'skillet',         'roles' => ['admin','koki']],
+                    ['route' => 'cashier.index',     'label' => 'Kasir',        'icon' => 'payments',        'roles' => ['admin','kasir']],
+                    ['route' => 'stocks.index',      'label' => 'Stok',         'icon' => 'inventory_2',     'roles' => ['admin','gudang']],
+                    ['route' => 'suppliers.index',   'label' => 'Supplier',     'icon' => 'local_shipping',  'roles' => ['admin','gudang']],
+                    ['route' => 'stock-entries.index','label' => 'Barang Masuk','icon' => 'move_to_inbox',   'roles' => ['admin','gudang']],
+                    ['route' => 'reports.index',     'label' => 'Laporan',      'icon' => 'assessment',      'roles' => ['admin','pemilik']],
+                    ['route' => 'staff.index',       'label' => 'Staf',         'icon' => 'group',           'roles' => ['admin']],
+                    ['route' => 'orders.create',     'label' => 'POS',          'icon' => 'point_of_sale',   'roles' => ['admin','pelayan']],
+                    ['route' => 'tables.denah',      'label' => 'Denah',        'icon' => 'grid_view',       'roles' => ['admin','pelayan']],
+                    ['route' => 'complaints.index',  'label' => 'Keluhan',      'icon' => 'feedback',        'roles' => ['admin','pelayan']],
+                    ['route' => 'reservations.index','label' => 'Reservasi',    'icon' => 'event_seat',      'roles' => ['admin','pelayan']],
                 ];
                 $nav = array_values(array_filter($navAll, fn ($item) => in_array($role, $item['roles'])));
             @endphp
