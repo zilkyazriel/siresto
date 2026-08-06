@@ -8,7 +8,7 @@
                 <span class="font-heading text-2xl font-extrabold">SIRESTO</span>
             </div>
             <div class="relative">
-                <h1 class="font-heading text-4xl font-bold leading-tight">Selamat datang kembali 👋</h1>
+                <h1 class="font-heading text-4xl font-bold leading-tight">Selamat datang kembali</h1>
                 <p class="mt-4 max-w-sm text-white/80">Masuk untuk mengelola pesanan, dapur, stok, dan laporan restoran Anda dalam satu tempat.</p>
             </div>
             <div class="relative text-sm text-white/60">© {{ date('Y') }} SIRESTO — Sistem Informasi Restoran</div>

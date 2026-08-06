@@ -43,7 +43,7 @@
             </button>
         </div>
 
-        <nav class="flex-1 space-y-1 overflow-y-auto px-2">
+        <nav id="sidebarNav" class="flex-1 space-y-1 overflow-y-auto px-2">
             @php
                 $role = auth()->user()->role ?? null;
                 $navAll = [
@@ -162,6 +162,33 @@
                 if (window.innerWidth < 1024) closeSidebar();
             });
         });
+        // ===== Ingat posisi gulir sidebar antar halaman =====
+        (function () {
+            var nav = document.getElementById('sidebarNav');
+            if (!nav) return;
+
+            var KUNCI = 'sidebarNavScroll';
+
+            // 1. Pulihkan posisi gulir dari halaman sebelumnya
+            var tersimpan = parseInt(sessionStorage.getItem(KUNCI) || '', 10);
+            if (!isNaN(tersimpan)) nav.scrollTop = tersimpan;
+
+            // 2. Pastikan menu yang sedang aktif tetap terlihat
+            var aktif = nav.querySelector('a.bg-orange-500');
+            if (aktif) {
+                var jarak = aktif.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+                if (jarak < 0 || jarak + aktif.offsetHeight > nav.clientHeight) {
+                    nav.scrollTop += jarak - (nav.clientHeight - aktif.offsetHeight) / 2;
+                }
+            }
+
+            // 3. Simpan posisi gulir sebelum pindah halaman
+            function simpan() {
+                sessionStorage.setItem(KUNCI, nav.scrollTop);
+            }
+            nav.addEventListener('click', simpan);
+            window.addEventListener('beforeunload', simpan);
+        })();
     </script>
 </body>
 </html>

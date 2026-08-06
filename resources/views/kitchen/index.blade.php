@@ -27,18 +27,41 @@
             </div>
         </div>
         <div class="flex flex-col gap-1 flex-1">
-            <a class="flex items-center gap-4 px-4 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors" href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="text-sm font-semibold">Dashboard</span>
-            </a>
-            <a class="flex items-center gap-4 px-4 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors" href="{{ Route::has('orders.index') ? route('orders.index') : '#' }}">
-                <span class="material-symbols-outlined">receipt_long</span>
-                <span class="text-sm font-semibold">Pesanan</span>
-            </a>
-            <a class="flex items-center gap-4 px-4 py-2.5 rounded-lg text-[#f97316] font-bold border-r-4 border-[#f97316] bg-[#f97316]/10" href="{{ Route::has('kitchen.index') ? route('kitchen.index') : '#' }}">
-                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">skillet</span>
-                <span class="text-sm font-semibold">Dapur</span>
-            </a>
+            @php
+                $role = auth()->user()->role ?? null;
+                $navAll = [
+                    ['route' => 'dashboard',          'label' => 'Dashboard',    'icon' => 'dashboard',        'roles' => ['admin','pemilik','pelayan','kasir','koki','gudang']],
+                    ['route' => 'menus.index',        'label' => 'Menu',         'icon' => 'restaurant_menu',  'roles' => ['admin']],
+                    ['route' => 'categories.index',   'label' => 'Kategori',     'icon' => 'category',         'roles' => ['admin']],
+                    ['route' => 'tables.index',       'label' => 'Meja',         'icon' => 'table_restaurant', 'roles' => ['admin','pelayan']],
+                    ['route' => 'orders.index',       'label' => 'Pesanan',      'icon' => 'receipt_long',     'roles' => ['admin','pelayan','kasir','koki']],
+                    ['route' => 'kitchen.index',      'label' => 'Dapur',        'icon' => 'skillet',          'roles' => ['admin','koki']],
+                    ['route' => 'cashier.index',      'label' => 'Kasir',        'icon' => 'payments',         'roles' => ['admin','kasir']],
+                    ['route' => 'stocks.index',       'label' => 'Stok',         'icon' => 'inventory_2',      'roles' => ['admin','gudang']],
+                    ['route' => 'suppliers.index',    'label' => 'Supplier',     'icon' => 'local_shipping',   'roles' => ['admin','gudang']],
+                    ['route' => 'stock-entries.index','label' => 'Barang Masuk', 'icon' => 'move_to_inbox',    'roles' => ['admin','gudang']],
+                    ['route' => 'reports.index',      'label' => 'Laporan',      'icon' => 'assessment',       'roles' => ['admin','pemilik']],
+                    ['route' => 'staff.index',        'label' => 'Staf',         'icon' => 'group',            'roles' => ['admin']],
+                    ['route' => 'orders.create',      'label' => 'POS',          'icon' => 'point_of_sale',    'roles' => ['admin','pelayan']],
+                    ['route' => 'tables.denah',       'label' => 'Denah',        'icon' => 'grid_view',        'roles' => ['admin','pelayan']],
+                    ['route' => 'complaints.index',   'label' => 'Keluhan',      'icon' => 'feedback',         'roles' => ['admin','pelayan']],
+                    ['route' => 'reservations.index', 'label' => 'Reservasi',    'icon' => 'event_seat',       'roles' => ['admin','pelayan']],
+                ];
+                $nav = array_values(array_filter($navAll, fn ($item) => in_array($role, $item['roles'])));
+            @endphp
+
+            @foreach ($nav as $item)
+                @php
+                    $exists = \Illuminate\Support\Facades\Route::has($item['route']);
+                    $active = $exists && request()->routeIs($item['route']);
+                    $href = $exists ? route($item['route']) : '#';
+                @endphp
+                <a href="{{ $href }}"
+                class="flex items-center gap-4 px-4 py-2.5 rounded-lg transition-colors {{ $active ? 'text-[#f97316] font-bold border-r-4 border-[#f97316] bg-[#f97316]/10' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' }}">
+                    <span class="material-symbols-outlined" @if ($active) style="font-variation-settings: 'FILL' 1;" @endif>{{ $item['icon'] }}</span>
+                    <span class="text-sm font-semibold">{{ $item['label'] }}</span>
+                </a>
+            @endforeach
         </div>
     </nav>
     <main class="flex-1 md:ml-64 flex flex-col h-screen">
