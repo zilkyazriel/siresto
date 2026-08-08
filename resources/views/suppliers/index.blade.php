@@ -112,8 +112,8 @@
 
     {{-- Slide-over panel --}}
     <div id="soBackdrop" onclick="closePanel()" class="fixed inset-0 z-40 hidden bg-[#213145]/50 backdrop-blur-sm"></div>
-    <div id="soPanel" class="fixed right-0 top-0 z-50 flex h-screen w-full max-w-md translate-x-full transform flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:bg-slate-800">
-        <div class="flex items-center justify-between border-b border-[#e0c0b1] bg-[#f8f9ff] px-6 py-5 dark:border-slate-700 dark:bg-slate-900/40">
+    <div id="soPanel" class="fixed right-0 top-0 z-50 flex h-[100dvh] w-full max-w-md translate-x-full transform flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out dark:bg-slate-800">
+        <div class="flex shrink-0 items-center justify-between border-b border-[#e0c0b1] bg-[#f8f9ff] px-6 py-5 dark:border-slate-700 dark:bg-slate-900/40">
             <h2 id="soTitle" class="font-['Poppins'] text-xl font-semibold text-[#0b1c30] dark:text-slate-100">Tambah Supplier Baru</h2>
             <button type="button" onclick="closePanel()" class="rounded-full p-2 text-[#584237] transition-colors hover:bg-[#e5eeff] dark:text-slate-400 dark:hover:bg-slate-700">
                 <span class="material-symbols-outlined">close</span>
@@ -122,7 +122,7 @@
         <form id="soForm" method="POST" class="flex flex-1 flex-col overflow-hidden">
             @csrf
             <input type="hidden" name="_method" id="soMethod" value="POST">
-            <div class="flex-1 space-y-6 overflow-y-auto p-6">
+            <div class="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
                 <div>
                     <label for="fName" class="mb-2 block text-sm font-semibold text-[#0b1c30] dark:text-slate-300">Nama Supplier <span class="text-[#ba1a1a]">*</span></label>
                     <input id="fName" name="name" type="text" placeholder="Contoh: PT. Maju Berkah"
@@ -158,7 +158,7 @@
                         class="w-full resize-none rounded-xl border border-[#e0c0b1] bg-white px-4 py-3 text-base text-[#0b1c30] outline-none transition-all placeholder:text-slate-400 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"></textarea>
                 </div>
             </div>
-            <div class="flex justify-end gap-4 border-t border-[#e0c0b1] bg-[#f8f9ff] p-6 dark:border-slate-700 dark:bg-slate-900/40">
+            <div class="flex shrink-0 justify-end gap-4 border-t border-[#e0c0b1] bg-[#f8f9ff] p-6 dark:border-slate-700 dark:bg-slate-900/40">
                 <button type="button" onclick="closePanel()" class="rounded-xl bg-[#d3e4fe] px-6 py-3 font-semibold text-[#0b1c30] transition-colors hover:bg-[#c0d5f5] dark:bg-slate-600 dark:text-slate-100 dark:hover:bg-slate-500">Batal</button>
                 <button type="submit" class="rounded-xl bg-[#f97316] px-6 py-3 font-semibold text-white shadow-[0px_4px_20px_rgba(249,115,22,0.25)] transition-colors hover:bg-[#ea6a0c]">Simpan Supplier</button>
             </div>

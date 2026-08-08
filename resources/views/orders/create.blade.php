@@ -104,7 +104,7 @@
 
             {{-- KANAN: keranjang --}}
             <aside class="lg:sticky lg:top-6">
-                <div class="flex max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-3xl border border-[#e0c0b1]/25 bg-white shadow-[0px_4px_20px_rgba(100,116,139,0.08)] dark:border-slate-700 dark:bg-slate-800">
+                <div class="flex flex-col overflow-hidden lg:max-h-[calc(100dvh-3rem)] rounded-3xl border border-[#e0c0b1]/25 bg-white shadow-[0px_4px_20px_rgba(100,116,139,0.08)] dark:border-slate-700 dark:bg-slate-800">
                     {{-- Header keranjang --}}
                     <div class="border-b border-[#e0c0b1]/25 p-4 dark:border-slate-700">
                         <div class="flex items-center justify-between">
