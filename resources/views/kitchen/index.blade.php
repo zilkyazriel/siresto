@@ -15,8 +15,8 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden text-slate-100" x-data="kds()">
-    <nav class="hidden md:flex bg-slate-900 h-screen w-64 fixed left-0 top-0 flex-col py-4 px-2 overflow-y-auto border-r border-slate-800 z-50">
+<body class="min-h-[100dvh] flex md:h-[100dvh] md:overflow-hidden text-slate-100" x-data="kds()">
+    <nav class="hidden md:flex bg-slate-900 h-[100dvh] w-64 fixed left-0 top-0 flex-col py-4 px-2 overflow-y-auto border-r border-slate-800 z-50">
         <div class="mb-8 px-2">
             <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-[#f97316] text-3xl" style="font-variation-settings: 'FILL' 1;">restaurant</span>
@@ -64,7 +64,7 @@
             @endforeach
         </div>
     </nav>
-    <main class="flex-1 md:ml-64 flex flex-col h-screen">
+    <main class="flex-1 md:ml-64 flex flex-col md:h-[100dvh]">
         <header class="bg-slate-900 border-b border-slate-800 flex justify-between items-center w-full h-16 px-6 sticky top-0 z-40">
             <h1 class="text-2xl font-bold font-['Poppins'] text-slate-100">Kitchen Display System</h1>
             <div class="flex items-center gap-4">
@@ -81,16 +81,16 @@
                 </a>
             </div>
         </header>
-        <div class="flex-1 overflow-hidden p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+        <div class="flex-1 md:overflow-hidden p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:h-full">
 
                 {{-- ============ KOLOM ANTRI ============ --}}
-                <div class="flex flex-col h-full bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                <div class="flex flex-col md:h-full bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                     <div class="bg-amber-500/20 border-b border-amber-500/30 p-4 flex justify-between items-center">
                         <h2 class="text-xl font-bold font-['Poppins'] text-amber-500 uppercase tracking-wider">ANTRI</h2>
                         <span class="bg-amber-500 text-slate-900 px-3 py-1 rounded-full text-sm font-semibold">{{ $antri->count() }}</span>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div class="flex-1 md:overflow-y-auto p-4 space-y-4">
                         @forelse ($antri as $c)
                         <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-lg relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-2 h-full bg-amber-500"></div>
@@ -126,12 +126,12 @@
                 </div>
 
                 {{-- ============ KOLOM DIMASAK ============ --}}
-                <div class="flex flex-col h-full bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                <div class="flex flex-col md:h-full bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                     <div class="bg-blue-500/20 border-b border-blue-500/30 p-4 flex justify-between items-center">
                         <h2 class="text-xl font-bold font-['Poppins'] text-blue-400 uppercase tracking-wider">DIMASAK</h2>
                         <span class="bg-blue-500 text-slate-900 px-3 py-1 rounded-full text-sm font-semibold">{{ $dimasak->count() }}</span>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div class="flex-1 md:overflow-y-auto p-4 space-y-4">
                         @forelse ($dimasak as $c)
                         <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-lg relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
@@ -167,12 +167,12 @@
                 </div>
 
                 {{-- ============ KOLOM SIAP ============ --}}
-                <div class="flex flex-col h-full bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                <div class="flex flex-col md:h-full bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                     <div class="bg-emerald-500/20 border-b border-emerald-500/30 p-4 flex justify-between items-center">
                         <h2 class="text-xl font-bold font-['Poppins'] text-emerald-400 uppercase tracking-wider">SIAP</h2>
                         <span class="bg-emerald-500 text-slate-900 px-3 py-1 rounded-full text-sm font-semibold">{{ $siap->count() }}</span>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div class="flex-1 md:overflow-y-auto p-4 space-y-4">
                         @forelse ($siap as $c)
                         <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-lg relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>

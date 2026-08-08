@@ -31,8 +31,8 @@
 
     <!-- ===== Sidebar ===== -->
     <aside id="sidebar"
-           class="fixed left-0 top-0 z-50 flex h-screen w-64 -translate-x-full flex-col rounded-r-2xl bg-white py-6 shadow-lg transition-transform duration-300 dark:bg-slate-800 lg:translate-x-0">
-        <div class="mb-8 flex items-center justify-between px-6">
+           class="fixed left-0 top-0 z-50 flex h-[100dvh] w-64 -translate-x-full flex-col rounded-r-2xl bg-white py-6 shadow-lg transition-transform duration-300 dark:bg-slate-800 lg:translate-x-0">
+        <div class="mb-8 flex shrink-0 items-center justify-between px-6">
             <div class="text-center">
                 <h1 class="font-heading text-2xl font-bold text-orange-500">SIRESTO</h1>
                 <p class="text-sm text-slate-400">Management System</p>
@@ -43,7 +43,7 @@
             </button>
         </div>
 
-        <nav id="sidebarNav" class="flex-1 space-y-1 overflow-y-auto px-2">
+        <nav id="sidebarNav" class="min-h-0 flex-1 space-y-1 overflow-y-auto px-2">
             @php
                 $role = auth()->user()->role ?? null;
                 $navAll = [
@@ -80,7 +80,7 @@
             @endforeach
         </nav>
 
-        <div class="mt-4 space-y-1 border-t border-slate-100 px-2 pt-4 dark:border-slate-700">
+        <div class="mt-4 shrink-0 space-y-1 border-t border-slate-100 px-2 pt-4 dark:border-slate-700">
             <a href="{{ route('profile.edit') }}"
                class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:text-slate-400 dark:hover:bg-slate-700">
                 <span class="material-symbols-outlined">account_circle</span>
